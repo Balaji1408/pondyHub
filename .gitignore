@@ -1,0 +1,4 @@
+# Local secrets / editor config — do not commit
+.cursor/mcp.json
+.env
+**/.env
