@@ -331,6 +331,7 @@ export function TemplateCarousel({ slides }: { slides: TemplateSlide[] }) {
   const [playing, setPlaying] = useState(true)
   const [hovered, setHovered] = useState(false)
   const [stageW, setStageW] = useState(1200)
+  const [viewportH, setViewportH] = useState(() => window.innerHeight)
   const stageRef = useRef<HTMLDivElement>(null)
   const prevOffsets = useRef<number[]>([])
   const dragX = useRef<number | null>(null)
@@ -341,6 +342,12 @@ export function TemplateCarousel({ slides }: { slides: TemplateSlide[] }) {
     const ro = new ResizeObserver(([entry]) => setStageW(entry.contentRect.width))
     ro.observe(el)
     return () => ro.disconnect()
+  }, [])
+
+  useEffect(() => {
+    const onResize = () => setViewportH(window.innerHeight)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
   }, [])
 
   const go = useCallback((dir: number) => setIndex((i) => (i + dir + n) % n), [n])
@@ -357,7 +364,8 @@ export function TemplateCarousel({ slides }: { slides: TemplateSlide[] }) {
   })
 
   const mobile = stageW < 768
-  const cardW = mobile ? stageW * 0.84 : Math.min(stageW * 0.58, 940)
+  const fitH = Math.max(250, viewportH - 350)
+  const cardW = mobile ? stageW * 0.84 : Math.min(stageW * 0.58, 940, fitH / 0.62)
   const cardH = cardW * 0.62
   const spacing = cardW * 0.94 + (mobile ? 14 : 28)
 
@@ -365,7 +373,7 @@ export function TemplateCarousel({ slides }: { slides: TemplateSlide[] }) {
   const active = slides[index]
 
   return (
-    <section className="premium-grain relative overflow-hidden bg-black py-16 text-white md:py-24">
+    <section className="premium-grain relative overflow-hidden bg-black py-16 text-white md:py-24 lg:py-10">
       <AnimatePresence initial={false}>
         <motion.div
           key={active.image}
@@ -385,13 +393,13 @@ export function TemplateCarousel({ slides }: { slides: TemplateSlide[] }) {
       </AnimatePresence>
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/70 via-black/35 to-black" aria-hidden />
 
-      <BlurFade className="relative mx-auto mb-10 max-w-3xl px-6 text-center md:mb-14">
+      <BlurFade className="relative mx-auto mb-10 max-w-3xl px-6 text-center md:mb-14 lg:mb-7">
         <TextReveal text={t('home.explore')} className="font-display text-lg text-white/70 md:text-xl" />
         <TextReveal
           text={t('home.curated')}
           as="h2"
           stagger={0.05}
-          className="mt-2 font-sans text-3xl font-bold tracking-tight md:text-5xl"
+          className="mt-2 font-sans text-3xl font-bold tracking-tight md:text-4xl 2xl:text-5xl"
         />
       </BlurFade>
 
@@ -471,7 +479,7 @@ export function TemplateCarousel({ slides }: { slides: TemplateSlide[] }) {
         })}
       </div>
 
-      <div className="relative mt-10 flex items-center justify-center gap-5">
+      <div className="relative mt-10 flex items-center justify-center gap-5 lg:mt-5">
         <div className="flex items-center gap-1.5">
           {slides.map((_, i) => (
             <button

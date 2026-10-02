@@ -1,11 +1,9 @@
 import { useMemo } from 'react'
 import { Hero } from '../components/Hero'
 import { TemplateCarousel, type TemplateSlide } from '../components/TemplateCarousel'
-import { BlurFade } from '../components/ui/BlurFade'
+import { CoastShowcase } from '../components/CoastShowcase'
 import { Marquee } from '../components/ui/Marquee'
-import { NumberTicker } from '../components/ui/NumberTicker'
 import { useLanguage } from '../i18n/LanguageContext'
-import { usePageTransition } from '../components/PageTransition'
 import { useStartingPrices } from '../api/hooks'
 
 function fromPrice(amount: number | null | undefined, fallback: number) {
@@ -14,7 +12,6 @@ function fromPrice(amount: number | null | undefined, fallback: number) {
 
 export function HomePage() {
   const { t, locale } = useLanguage()
-  const { launchTo } = usePageTransition()
   const isLatin = locale === 'en'
   const prices = useStartingPrices().data
 
@@ -126,16 +123,6 @@ export function HomePage() {
     [t],
   )
 
-  const stats = useMemo(
-    () => [
-      { value: 48, suffix: '+', label: t('home.stats.stays') },
-      { value: 32, suffix: '+', label: t('home.stats.rides') },
-      { value: 12, suffix: '', label: t('home.stats.beaches') },
-      { value: 4.8, suffix: '', label: t('home.stats.rating'), decimalPlaces: 1 },
-    ],
-    [t],
-  )
-
   return (
     <>
       <Hero />
@@ -158,61 +145,7 @@ export function HomePage() {
         </Marquee>
       </section>
 
-      <section className="relative overflow-hidden bg-[#0c1419] text-white">
-        <div
-          className="pointer-events-none absolute -right-24 top-1/2 h-[28rem] w-[28rem] -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgb(31_77_82_/_0.35)_0%,transparent_68%)]"
-          aria-hidden
-        />
-        <div className="relative mx-auto grid max-w-6xl gap-12 px-6 py-16 md:grid-cols-[1.05fr_1.35fr] md:items-end md:gap-16 md:px-10 md:py-24 lg:px-16">
-          <BlurFade className="max-w-md">
-            <p className="font-display text-lg italic text-white/55 md:text-xl">{t('hero.eyebrow')}</p>
-            <h2 className="mt-3 font-sans text-3xl font-extrabold tracking-tight md:text-4xl lg:text-[2.75rem] lg:leading-[1.1]">
-              {t('home.stats.headline')}
-            </h2>
-            <p className="mt-5 text-sm leading-relaxed text-white/60 md:text-base">{t('home.join')}</p>
-            <button
-              type="button"
-              onClick={() => launchTo('/rooms')}
-              className={`group mt-8 inline-flex items-center gap-3 border-b border-white/35 pb-1 text-[11px] font-semibold text-white transition hover:border-white ${
-                isLatin ? 'tracking-[0.18em] uppercase' : 'tracking-wide'
-              }`}
-            >
-              {t('nav.getStarted')}
-              <span aria-hidden className="transition-transform duration-300 group-hover:translate-x-1">
-                →
-              </span>
-            </button>
-          </BlurFade>
-
-          <div className="grid grid-cols-2 gap-x-8 gap-y-10 sm:gap-x-10 lg:grid-cols-4 lg:gap-0">
-            {stats.map((stat, i) => (
-              <BlurFade key={stat.label} delay={0.1 + i * 0.08}>
-                <div
-                  className={`relative flex flex-col ${
-                    i > 0 ? 'lg:border-l lg:border-white/12 lg:pl-8' : ''
-                  }`}
-                >
-                  <p className="font-display text-4xl font-semibold tracking-tight text-white md:text-5xl">
-                    <NumberTicker
-                      value={stat.value}
-                      decimalPlaces={stat.decimalPlaces ?? 0}
-                      suffix={stat.suffix}
-                      delay={0.12 * i}
-                    />
-                  </p>
-                  <p
-                    className={`mt-3 text-[10px] font-semibold text-white/45 ${
-                      isLatin ? 'tracking-[0.2em] uppercase' : 'tracking-wide'
-                    }`}
-                  >
-                    {stat.label}
-                  </p>
-                </div>
-              </BlurFade>
-            ))}
-          </div>
-        </div>
-      </section>
+      <CoastShowcase />
 
       <TemplateCarousel slides={templateSlides} />
     </>

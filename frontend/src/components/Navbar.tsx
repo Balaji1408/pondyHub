@@ -68,9 +68,15 @@ export function Navbar() {
         className={`fixed inset-x-0 top-0 z-50 transition-[background-color,backdrop-filter,box-shadow] duration-500 ${
           solid
             ? 'bg-ink/95 text-white shadow-[0_12px_40px_-24px_rgb(0_0_0_/_0.55)] backdrop-blur-md'
-            : 'bg-transparent text-white'
+            : 'bg-transparent text-white [text-shadow:0_1px_2px_rgb(0_0_0_/_0.6),0_2px_14px_rgb(0_0_0_/_0.5)]'
         }`}
       >
+        <span
+          aria-hidden
+          className={`pointer-events-none absolute inset-x-0 top-0 -z-10 h-28 bg-gradient-to-b from-black/60 via-black/25 to-transparent transition-opacity duration-500 ${
+            solid ? 'opacity-0' : 'opacity-100'
+          }`}
+        />
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-5 md:h-[4.25rem] md:px-8">
           <Link
             to="/"
@@ -87,8 +93,8 @@ export function Navbar() {
                     to={l.to}
                     onClick={handleNavLaunch(l.to)}
                     className={({ isActive }) =>
-                      `group relative mx-1 px-3 py-2 text-[11px] font-medium transition-colors duration-300 ${navCase} ${
-                        isActive ? 'text-white' : 'text-white/85 hover:text-white'
+                      `group relative mx-1 px-3 py-2 text-[12.5px] font-semibold transition-colors duration-300 ${navCase} ${
+                        isActive ? 'text-white' : 'text-white hover:opacity-90'
                       }`
                     }
                   >
@@ -115,7 +121,7 @@ export function Navbar() {
             <LanguageSwitcher />
             <Link
               to="/admin/login"
-              className={`hidden text-[11px] font-medium text-white/55 transition hover:text-white sm:inline ${
+              className={`hidden text-[12px] font-semibold text-white transition hover:opacity-90 sm:inline ${
                 isLatin ? 'tracking-[0.16em] uppercase' : 'tracking-wide'
               }`}
             >
@@ -125,7 +131,7 @@ export function Navbar() {
               <Link
                 to="/rooms"
                 onClick={handleGetStarted}
-                className={`cta-get-started px-4 py-2.5 text-[11px] font-semibold sm:px-5 ${
+                className={`cta-get-started px-3 py-2.5 text-[10px] font-semibold whitespace-nowrap [text-shadow:none] sm:px-5 sm:text-[11px] ${
                   isLatin ? 'tracking-[0.14em] uppercase' : 'tracking-wide'
                 } ${launching ? 'is-launching' : ''}`}
                 aria-busy={launching}
