@@ -42,6 +42,28 @@ npm run dev
 
 App: `http://localhost:5173` — `/api` is proxied to the backend.
 
+## Deploying to Netlify
+
+Netlify serves the React app and runs the Express API as one serverless function
+([`backend/netlify/functions/api.ts`](backend/netlify/functions/api.ts)) behind `/api/*`.
+The database must be reachable from the internet (e.g. TiDB Cloud). All build settings
+live in [`netlify.toml`](netlify.toml).
+
+1. Seed the hosted database once from your machine: put its credentials in `backend/.env`
+   and run `npm run db:setup` in `backend/`.
+2. Netlify → **Add new site → Import an existing project** → pick this repo
+   (leave base directory empty; build command and publish folder come from `netlify.toml`).
+3. **Site configuration → Environment variables** → add `DB_HOST`, `DB_PORT`, `DB_USER`,
+   `DB_PASSWORD`, `DB_NAME`, `DB_SSL=true`, `ADMIN_USER`, `ADMIN_PASSWORD`,
+   `ADMIN_SECRET` (long random string) and `GOOGLE_MAPS_API_KEY`.
+4. Deploy, then check `https://<site>.netlify.app/api/health` returns `{ "ok": true }`.
+
+On Netlify, admin-uploaded room photos are stored in Netlify Blobs (store `uploads`);
+locally they are still written to `backend/uploads/`.
+
+To point the Android app at the live site, set `server.url` in
+[`mobile/capacitor.config.json`](mobile/capacitor.config.json) to your `https://<site>.netlify.app/`.
+
 ## Features
 
 - Rooms filtered by couples / family / friends and member count

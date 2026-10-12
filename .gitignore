@@ -2,3 +2,4 @@
 .cursor/mcp.json
 .env
 **/.env
+.netlify/

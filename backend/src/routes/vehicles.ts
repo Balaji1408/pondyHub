@@ -8,7 +8,7 @@ router.get('/', async (req, res) => {
   try {
     const { type, withDriver } = req.query;
     const clauses: string[] = ['available = 1'];
-    const params: Record<string, unknown> = {};
+    const params: Record<string, string | number> = {};
 
     if (type && typeof type === 'string') {
       clauses.push('type = :type');

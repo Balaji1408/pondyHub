@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
@@ -11,12 +14,15 @@
     "db:setup": "node scripts/import-db.mjs"
   },
   "dependencies": {
+    "@netlify/blobs": "^11.1.4",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "mysql2": "^3.12.0"
+    "mysql2": "^3.12.0",
+    "serverless-http": "^4.0.0"
   },
   "devDependencies": {
+    "@types/aws-lambda": "^8.10.164",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/node": "^22.10.5",

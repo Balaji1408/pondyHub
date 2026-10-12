@@ -29,7 +29,7 @@ router.get('/', async (req, res) => {
   try {
     const { category, roomType, minMembers, maxMembers } = req.query
     const clauses: string[] = ['1=1']
-    const params: Record<string, unknown> = {}
+    const params: Record<string, string | number> = {}
 
     if (category && typeof category === 'string') {
       clauses.push('category = :category')

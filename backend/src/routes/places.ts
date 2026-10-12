@@ -21,7 +21,7 @@ router.get('/', async (req, res) => {
   try {
     const { kind, nearRoomId, nearBeachId, openNow, seafood } = req.query;
     const clauses: string[] = ['1=1'];
-    const params: Record<string, unknown> = {};
+    const params: Record<string, string | number> = {};
 
     if (kind && typeof kind === 'string') {
       const kinds = kind.split(',').map((k) => k.trim()).filter(Boolean);
