@@ -1,3 +1,6 @@
+import type { AdminBooking } from '../types'
+import { formatTime } from './boating'
+
 export function formatDate(value: string) {
   const d = new Date(value)
   if (Number.isNaN(d.getTime())) return value
@@ -34,6 +37,20 @@ export function formatDateTime(value: string) {
 export function formatMoney(n: number | null) {
   if (n == null) return '—'
   return `₹${n.toLocaleString('en-IN')}`
+}
+
+/** Time slot line for the list: "Morning Trip 1 · 9:00 AM" for boats, the raw slot otherwise. */
+export function slotLabel(b: AdminBooking) {
+  if (!b.boat) return b.slot
+  const time = b.boat.startTime ? formatTime(b.boat.startTime) : null
+  return [b.boat.slotName, time].filter(Boolean).join(' · ') || b.slot
+}
+
+export function guestsLabel(b: AdminBooking) {
+  if (!b.boat) return String(b.guests)
+  return b.boat.childSeats > 0
+    ? `${b.boat.adultSeats}A + ${b.boat.childSeats}C`
+    : `${b.boat.adultSeats}A`
 }
 
 export function typeLabel(type: string) {

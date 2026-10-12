@@ -52,6 +52,7 @@ export function mapRoom(row: Record<string, unknown>) {
     description: row.description,
     location: row.location,
     images: parseJson(row.images, [] as string[]),
+    gallery: parseJson(row.room_gallery, {} as Record<string, string>) ?? {},
     amenities: parseJson(row.amenities, [] as string[]),
     rating: Number(row.rating),
   };
@@ -85,10 +86,14 @@ export function mapBoat(row: Record<string, unknown>) {
     id: row.id,
     name: row.name,
     type: row.type,
-    seats: row.seats,
+    coachType: (row.coach_type as string | null) ?? null,
+    departurePoint: (row.departure_point as string | null) ?? null,
+    seats: Number(row.seats),
+    /** Per adult seat. */
     price: Number(row.price),
+    /** Per child seat (below 12 yrs). */
+    priceChild: Number(row.price_child ?? 0),
     description: row.description,
-    slots: parseJson(row.slots, [] as string[]),
     routes: parseJson(row.routes, [] as unknown[]),
     images: parseJson(row.images, [] as string[]),
     rating: Number(row.rating),

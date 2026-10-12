@@ -1,16 +1,16 @@
 import { Router } from 'express';
-import { randomBytes } from 'crypto';
 import { pool } from '../db.js';
 import { mapRoom, roomPriceForGuests } from '../mappers.js';
+import { BookingError, confirmationId, createBoatBooking } from '../boatBooking.js';
 
 const router = Router();
 
-function confirmationId() {
-  return `PH-${randomBytes(4).toString('hex').toUpperCase()}`;
-}
-
 router.post('/', async (req, res) => {
   try {
+    if (req.body?.type === 'boat') {
+      return res.status(201).json(await createBoatBooking(req.body));
+    }
+
     const {
       type,
       itemId,
@@ -79,6 +79,9 @@ router.post('/', async (req, res) => {
       message: 'Booking confirmed (demo — no payment collected).',
     });
   } catch (err) {
+    if (err instanceof BookingError) {
+      return res.status(err.status).json({ error: err.message, ...err.details });
+    }
     console.error(err);
     res.status(500).json({ error: 'Failed to create booking' });
   }

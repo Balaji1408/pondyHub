@@ -15,16 +15,25 @@ import {
 import type { AdminBooking, BookingType, PriceKind } from '../types'
 import { ElegantPieChart } from '../components/ElegantPieChart'
 import { AdminPricingPanel } from '../components/AdminPricingPanel'
+import { AdminRoomPhotosPanel } from '../components/AdminRoomPhotosPanel'
 import { AdminBookingModal, BookingStatusActions } from '../components/AdminBookingModal'
-import { formatDate, formatMoney, statusTone, typeLabel } from '../lib/adminBookings'
+import {
+  formatDate,
+  formatMoney,
+  guestsLabel,
+  slotLabel,
+  statusTone,
+  typeLabel,
+} from '../lib/adminBookings'
 
 type Filter = 'all' | BookingType
 type Theme = 'dark' | 'light'
-type Tab = 'bookings' | PriceKind
+type Tab = 'bookings' | PriceKind | 'photos'
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'bookings', label: 'Bookings' },
   { id: 'rooms', label: 'Rooms' },
+  { id: 'photos', label: 'Room photos' },
   { id: 'vehicles', label: 'Vehicles' },
   { id: 'boats', label: 'Boating' },
 ]
@@ -206,7 +215,8 @@ export function AdminDashboardPage() {
       return (
         b.confirmationId.toLowerCase().includes(q) ||
         (b.guestName ?? '').toLowerCase().includes(q) ||
-        (b.guestPhone ?? '').toLowerCase().includes(q)
+        (b.guestPhone ?? '').toLowerCase().includes(q) ||
+        (b.boat?.pnr ?? '').toLowerCase().includes(q)
       )
     })
   }, [bookings.data, filter, query])
@@ -352,7 +362,7 @@ export function AdminDashboardPage() {
                 light ? 'text-[#0a0a0a]' : 'text-white'
               }`}
             >
-              {tab === 'bookings' ? 'Bookings dashboard' : 'Pricing'}
+              {tab === 'bookings' ? 'Bookings dashboard' : tab === 'photos' ? 'Room photos' : 'Pricing'}
             </h1>
           </div>
           <p className={`text-sm ${light ? 'text-[#9a9288]' : 'text-[#6b6b6b]'}`}>
@@ -389,7 +399,9 @@ export function AdminDashboardPage() {
           ))}
         </div>
 
-        {tab !== 'bookings' ? (
+        {tab === 'photos' ? (
+          <AdminRoomPhotosPanel light={light} accent={accents.lime} onSaved={setToast} />
+        ) : tab !== 'bookings' ? (
           <AdminPricingPanel
             kind={tab}
             light={light}
@@ -511,7 +523,7 @@ export function AdminDashboardPage() {
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search ID, name, phone"
+                placeholder="Search ID, PNR, name, phone"
                 className={`rounded-full px-4 py-2.5 text-sm outline-none transition sm:w-56 ${
                   light
                     ? 'border border-[#e8e4dc] bg-[#faf8f4] text-[#0a0a0a] placeholder:text-[#9a9288] focus:border-[#0a0a0a]'
@@ -605,6 +617,15 @@ export function AdminDashboardPage() {
                             }`}
                           >
                             {b.confirmationId}
+                            {b.boat?.pnr && (
+                              <div
+                                className={`mt-0.5 font-normal ${
+                                  light ? 'text-[#9a9288]' : 'text-[#6b6b6b]'
+                                }`}
+                              >
+                                PNR {b.boat.pnr}
+                              </div>
+                            )}
                           </td>
                           <td className="py-4 pr-4">
                             <span
@@ -645,11 +666,11 @@ export function AdminDashboardPage() {
                             className={`py-4 pr-4 ${light ? 'text-[#3d3d3d]' : 'text-[#d4d4d4]'}`}
                           >
                             <div>{formatDate(String(b.date))}</div>
-                            {b.slot && (
+                            {slotLabel(b) && (
                               <div
                                 className={`text-xs ${light ? 'text-[#9a9288]' : 'text-[#6b6b6b]'}`}
                               >
-                                {b.slot}
+                                {slotLabel(b)}
                               </div>
                             )}
                           </td>
@@ -658,7 +679,14 @@ export function AdminDashboardPage() {
                               light ? 'text-[#3d3d3d]' : 'text-[#d4d4d4]'
                             }`}
                           >
-                            {b.guests}
+                            {guestsLabel(b)}
+                            {b.boat && b.boat.seats.length > 0 && (
+                              <div
+                                className={`text-xs ${light ? 'text-[#9a9288]' : 'text-[#6b6b6b]'}`}
+                              >
+                                Seats {b.boat.seats.join(', ')}
+                              </div>
+                            )}
                           </td>
                           <td
                             className={`py-4 pr-4 font-semibold tabular-nums ${
@@ -724,6 +752,17 @@ export function AdminDashboardPage() {
                           >
                             {typeLabel(b.type)} · {formatDate(String(b.date))}
                           </p>
+                          {b.boat && (
+                            <p
+                              className={`mt-0.5 text-xs ${
+                                light ? 'text-[#9a9288]' : 'text-[#6b6b6b]'
+                              }`}
+                            >
+                              {[slotLabel(b), guestsLabel(b), b.boat.pnr && `PNR ${b.boat.pnr}`]
+                                .filter(Boolean)
+                                .join(' · ')}
+                            </p>
+                          )}
                         </div>
                         <span
                           className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold tracking-[0.08em] uppercase ${statusTone(b.status, light)}`}

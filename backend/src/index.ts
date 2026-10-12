@@ -10,6 +10,8 @@ import bookingsRouter from './routes/bookings.js';
 import adminRouter from './routes/admin.js';
 import googlePhotoRouter from './routes/googlePhoto.js';
 import pricesRouter from './routes/prices.js';
+import { requireAdmin } from './auth.js';
+import { UPLOAD_DIR, UPLOAD_URL_PREFIX } from './uploads.js';
 
 dotenv.config();
 
@@ -17,7 +19,10 @@ const app = express();
 const PORT = Number(process.env.PORT || 4000);
 
 app.use(cors());
+// Photo uploads arrive as base64 JSON, so only authenticated admins get the larger body limit.
+app.use('/api/admin/rooms', requireAdmin, express.json({ limit: '8mb' }));
 app.use(express.json());
+app.use(UPLOAD_URL_PREFIX, express.static(UPLOAD_DIR, { maxAge: '30d', immutable: true }));
 
 app.get('/api/health', async (_req, res) => {
   try {

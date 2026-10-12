@@ -6,6 +6,10 @@ import type {
   BookingPayload,
   BookingResult,
   Boat,
+  BoatBookingPayload,
+  BoatBookingResult,
+  BoatSeats,
+  GallerySlot,
   Place,
   PriceFields,
   PriceKind,
@@ -49,7 +53,18 @@ export const api = {
     const s = q.toString()
     return getJson<Boat[]>(`/api/boats${s ? `?${s}` : ''}`)
   },
-  boat: (id: number) => getJson<Boat>(`/api/boats/${id}`),
+  boat: (id: number, date?: string) =>
+    getJson<Boat>(`/api/boats/${id}${date ? `?date=${encodeURIComponent(date)}` : ''}`),
+  boatSeats: (id: number, date: string, slotId: number) =>
+    getJson<BoatSeats>(
+      `/api/boats/${id}/seats?${new URLSearchParams({ date, slotId: String(slotId) })}`
+    ),
+  createBoatBooking: (payload: BoatBookingPayload) =>
+    getJson<BoatBookingResult>('/api/bookings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }),
   places: (params?: Record<string, string>) => {
     const q = new URLSearchParams(params)
     const s = q.toString()
@@ -109,4 +124,18 @@ export const api = {
         body: JSON.stringify(fields),
       }
     ),
+  uploadRoomPhoto: (id: number, slot: GallerySlot, image: string) =>
+    getJson<{ id: number; slot: GallerySlot; url: string }>(
+      `/api/admin/rooms/${id}/gallery/${slot}`,
+      {
+        method: 'PUT',
+        headers: adminHeaders(),
+        body: JSON.stringify({ image }),
+      }
+    ),
+  resetRoomPhoto: (id: number, slot: GallerySlot) =>
+    getJson<{ id: number; slot: GallerySlot }>(`/api/admin/rooms/${id}/gallery/${slot}`, {
+      method: 'DELETE',
+      headers: adminHeaders(),
+    }),
 }

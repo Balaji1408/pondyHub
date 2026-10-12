@@ -1,0 +1,17 @@
+{
+  "name": "pondy-hub-mobile",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Android WebView wrapper for the Pondy Hub website",
+  "scripts": {
+    "sync": "cap sync android",
+    "apk": "cap sync android && cd android && gradlew.bat assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.2.1",
+    "@capacitor/core": "^6.2.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.2.1"
+  }
+}

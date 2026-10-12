@@ -15,7 +15,13 @@ const COPY: Record<PriceKind, { title: string; fields: FieldDef[] }> = {
     ],
   },
   vehicles: { title: 'Vehicle prices', fields: [{ key: 'price', unit: 'per day' }] },
-  boats: { title: 'Boating prices', fields: [{ key: 'price', unit: 'per trip' }] },
+  boats: {
+    title: 'Boating prices',
+    fields: [
+      { key: 'price', unit: 'per adult' },
+      { key: 'childPrice', unit: 'per child', allowZero: true },
+    ],
+  },
 }
 
 function formatMoney(n: number) {

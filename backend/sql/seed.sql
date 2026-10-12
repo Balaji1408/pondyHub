@@ -79,31 +79,50 @@ INSERT INTO vehicles (name, type, with_driver, price_per_day, description, seats
 ('Yamaha FZ Bike', 'bike', 0, 700.00, 'Sporty ride for beach roads.', 2,
  JSON_ARRAY('https://images.unsplash.com/photo-1630787283150-519a05fefee3?w=800&q=80'), 4.5);
 
-INSERT INTO boats (name, type, seats, price, description, slots, routes, images, rating) VALUES
-('Bay Yacht Sunset', 'yacht', 12, 15000.00, 'Private yacht sunset sail with soft drinks.',
- JSON_ARRAY('16:00','17:00','18:00'),
+-- price / price_child are per seat (adult / child below 12 yrs).
+INSERT INTO boats (name, type, coach_type, departure_point, seats, price, price_child, description, routes, images, rating) VALUES
+('Bay Yacht Sunset', 'yacht', 'Luxury Yacht', 'Promenade Jetty', 12, 1500.00, 900.00, 'Private yacht sunset sail with soft drinks.',
  JSON_ARRAY(JSON_OBJECT('name','Promenade → Chunnambar → Back','duration','2 hrs','stops',JSON_ARRAY('Promenade Jetty','Chunnambar','Return'))),
  JSON_ARRAY('https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=800&q=80'), 4.9),
-('Morning Yacht Cruise', 'yacht', 10, 12000.00, 'Calm morning waters and photo stops.',
- JSON_ARRAY('07:00','08:30','10:00'),
+('Morning Yacht Cruise', 'yacht', 'Luxury Yacht', 'New Harbour', 10, 1200.00, 700.00, 'Calm morning waters and photo stops.',
  JSON_ARRAY(JSON_OBJECT('name','Harbour Loop','duration','90 min','stops',JSON_ARRAY('New Harbour','Lighthouse View','Harbour'))),
  JSON_ARRAY('https://images.unsplash.com/photo-1605281317010-fe5ffe798166?w=800&q=80'), 4.8),
-('Paddle Paradise', 'paddle', 2, 600.00, 'Paddle boats at Chunnambar backwaters.',
- JSON_ARRAY('09:00','10:00','11:00','15:00','16:00'),
+('Paddle Paradise', 'paddle', 'Paddle Boat', 'Chunnambar Boathouse', 2, 300.00, 200.00, 'Paddle boats at Chunnambar backwaters.',
  JSON_ARRAY(JSON_OBJECT('name','Backwater Circuit','duration','45 min','stops',JSON_ARRAY('Boathouse','Mangrove bend','Boathouse'))),
  JSON_ARRAY('https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&q=80'), 4.5),
-('Family Paddle Boat', 'paddle', 4, 900.00, 'Four-seat paddle for families.',
- JSON_ARRAY('09:30','11:00','15:30'),
+('Family Paddle Boat', 'paddle', 'Family Paddle Boat', 'Chunnambar Boathouse', 4, 250.00, 150.00, 'Four-seat paddle for families.',
  JSON_ARRAY(JSON_OBJECT('name','Island Edge','duration','60 min','stops',JSON_ARRAY('Start','Island edge','Return'))),
  JSON_ARRAY('https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=800&q=80'), 4.4),
-('Kayak Duo Serenity', 'kayak', 2, 800.00, 'Guided kayak near Serenity Beach.',
- JSON_ARRAY('06:30','07:30','16:30'),
+('Kayak Duo Serenity', 'kayak', 'Guided Kayak', 'Serenity Beach', 2, 450.00, 300.00, 'Guided kayak near Serenity Beach.',
  JSON_ARRAY(JSON_OBJECT('name','Coastal Kayak','duration','75 min','stops',JSON_ARRAY('Serenity','Rocky cove','Serenity'))),
  JSON_ARRAY('https://images.unsplash.com/photo-1468413253725-0d5181091126?w=800&q=80'), 4.6),
-('Catamaran Island Hop', 'catamaran', 20, 1800.00, 'Shared catamaran to Paradise Beach.',
- JSON_ARRAY('09:00','11:00','13:00','15:00'),
+('Catamaran Island Hop', 'catamaran', 'Catamaran Cruise', 'Chunnambar Boathouse', 20, 450.00, 250.00, 'Shared catamaran to Paradise Beach.',
  JSON_ARRAY(JSON_OBJECT('name','Chunnambar → Paradise Beach','duration','20 min each way','stops',JSON_ARRAY('Chunnambar','Paradise Beach'))),
  JSON_ARRAY('https://images.unsplash.com/photo-1544551763-77ef2d0cfc6c?w=800&q=80'), 4.7);
+
+INSERT INTO boat_time_slots (boat_id, name, start_time, end_time, reporting_time, is_seasonal, valid_from, valid_until, days_of_week) VALUES
+(1, 'Sunset Trip 1', '16:00', '18:00', '15:45', 0, NULL, NULL, NULL),
+(1, 'Sunset Trip 2', '17:00', '19:00', '16:45', 0, NULL, NULL, NULL),
+(1, 'Sunset Trip 3', '18:00', '20:00', '17:45', 0, NULL, NULL, NULL),
+(2, 'Sunrise Trip', '07:00', '08:30', '06:45', 0, NULL, NULL, NULL),
+(2, 'Morning Trip 1', '08:30', '10:00', '08:15', 0, NULL, NULL, NULL),
+(2, 'Morning Trip 2', '10:00', '11:30', '09:45', 0, NULL, NULL, NULL),
+(3, 'Morning Trip 1', '09:00', '09:45', '08:45', 0, NULL, NULL, NULL),
+(3, 'Morning Trip 2', '10:00', '10:45', '09:45', 0, NULL, NULL, NULL),
+(3, 'Morning Trip 3', '11:00', '11:45', '10:45', 0, NULL, NULL, NULL),
+(3, 'Afternoon Trip', '15:00', '15:45', '14:45', 0, NULL, NULL, NULL),
+(3, 'Sunset Trip', '16:00', '16:45', '15:45', 0, NULL, NULL, NULL),
+(4, 'Morning Trip 1', '09:30', '10:30', '09:15', 0, NULL, NULL, NULL),
+(4, 'Morning Trip 2', '11:00', '12:00', '10:45', 0, NULL, NULL, NULL),
+(4, 'Afternoon Trip', '15:30', '16:30', '15:15', 0, NULL, NULL, NULL),
+(5, 'Sunrise Trip 1', '06:30', '07:45', '06:15', 0, NULL, NULL, NULL),
+(5, 'Sunrise Trip 2', '07:30', '08:45', '07:15', 0, NULL, NULL, NULL),
+(5, 'Sunset Trip', '16:30', '17:45', '16:15', 0, NULL, NULL, NULL),
+(6, 'Morning Trip 1', '09:00', '09:40', '08:45', 0, NULL, NULL, NULL),
+(6, 'Morning Trip 2', '11:00', '11:40', '10:45', 0, NULL, NULL, NULL),
+(6, 'Afternoon Trip 1', '13:00', '13:40', '12:45', 0, NULL, NULL, NULL),
+(6, 'Afternoon Trip 2', '15:00', '15:40', '14:45', 0, NULL, NULL, NULL),
+(6, 'Weekend Sunset Special', '17:00', '18:00', '16:45', 1, '2026-10-01', '2027-03-31', '6,7');
 
 -- Beaches first (ids 1-3) so bars/cafes can reference near_beach_id
 INSERT INTO places (name, kind, description, location, opens_at, closes_at, best_visit_time, is_seafood_spot, near_room_id, near_beach_id, images, rating) VALUES

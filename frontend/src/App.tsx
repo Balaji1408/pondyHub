@@ -9,6 +9,7 @@ import { HomePage } from './pages/HomePage'
 import { RoomsPage } from './pages/RoomsPage'
 import { VehiclesPage } from './pages/VehiclesPage'
 import { BoatingPage } from './pages/BoatingPage'
+import { BoatDetailPage } from './pages/BoatDetailPage'
 import {
   CafesPage,
   BeachesPage,
@@ -93,6 +94,7 @@ export default function App() {
                   <Route path="rooms" element={<RoomsPage />} />
                   <Route path="vehicles" element={<VehiclesPage />} />
                   <Route path="boating" element={<BoatingPage />} />
+                  <Route path="boating/:id" element={<BoatDetailPage />} />
                   <Route path="cafes" element={<CafesPage />} />
                   <Route path="beaches" element={<BeachesPage />} />
                   <Route path="bars" element={<BarsPage />} />

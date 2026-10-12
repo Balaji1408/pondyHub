@@ -10,6 +10,7 @@ export type PlaceKind =
   | 'foodstreet'
   | 'whitetown'
 export type BookingType = 'room' | 'vehicle' | 'boat'
+export type GallerySlot = 'exterior' | 'bedroom' | 'bathroom' | 'living'
 
 export interface Room {
   id: number
@@ -27,6 +28,8 @@ export interface Room {
   description: string
   location: string
   images: string[]
+  /** Photos uploaded by an admin; each one overrides that slot's default image. */
+  gallery?: Partial<Record<GallerySlot, string>>
   amenities: string[]
   rating: number
   reviewCount?: number
@@ -56,17 +59,84 @@ export interface BoatRoute {
   stops: string[]
 }
 
+export interface BoatTimeSlot {
+  id: number
+  name: string | null
+  /** HH:MM */
+  startTime: string
+  endTime: string
+  reportingTime: string | null
+  isSeasonal: boolean
+  isDisabled: boolean
+  isDeparted: boolean
+  capacity: number
+  priceAdult: number
+  priceChild: number
+  bookedSeats: number
+  blockedSeatNumbers: string[]
+  availableSeats: number
+}
+
 export interface Boat {
   id: number
   name: string
   type: BoatType
+  coachType: string | null
+  departurePoint: string | null
+  /** Passenger capacity. */
   seats: number
+  /** Per adult seat. */
   price: number
+  /** Per child seat (below 12 yrs). */
+  priceChild: number
   description: string
+  /** Start times of `timeSlots`, HH:MM. */
   slots: string[]
   routes: BoatRoute[]
   images: string[]
   rating: number
+  /** Date (YYYY-MM-DD) the availability below was computed for. */
+  date: string
+  isDisabled: boolean
+  timeSlots: BoatTimeSlot[]
+}
+
+export interface BoatSeats {
+  capacity: number
+  takenSeats: string[]
+}
+
+export interface BoatBookingPayload {
+  type: 'boat'
+  itemId: number
+  slotId: number
+  date: string
+  adultSeats: number
+  childSeats: number
+  selectedSeats: string[]
+  guestName: string
+  guestPhone: string
+  guestEmail?: string
+}
+
+export interface BoatBookingResult {
+  confirmationId: string
+  pnr: string
+  status: string
+  type: 'boat'
+  itemId: number
+  date: string
+  slot: string
+  guests: number
+  totalAmount: number
+  message: string
+  boat: { name: string; coachType: string | null; departurePoint: string | null }
+  timeSlot: Pick<BoatTimeSlot, 'id' | 'name' | 'startTime' | 'endTime' | 'reportingTime'>
+  adultSeats: number
+  childSeats: number
+  seats: string[]
+  autoAssignedSeats: string[]
+  guestName: string
 }
 
 export interface Place {
@@ -124,10 +194,24 @@ export interface AdminBooking {
   status: string
   guestName: string | null
   guestPhone: string | null
+  guestEmail: string | null
   totalAmount: number | null
   createdAt: string
   extras: Record<string, unknown> | null
   item: { name: string; detail: string; image: string | null } | null
+  boat: AdminBoatBookingDetails | null
+}
+
+export interface AdminBoatBookingDetails {
+  pnr: string | null
+  slotName: string | null
+  startTime: string | null
+  endTime: string | null
+  reportingTime: string | null
+  adultSeats: number
+  childSeats: number
+  seats: number[]
+  departurePoint: string | null
 }
 
 export interface AdminStats {
@@ -147,11 +231,12 @@ export interface AdminPriceItem {
   detail: string
   price: number
   extraGuestPrice?: number
+  childPrice?: number
 }
 
 export type AdminCatalog = Record<PriceKind, AdminPriceItem[]>
 
-export type PriceFields = { price?: number; extraGuestPrice?: number }
+export type PriceFields = { price?: number; extraGuestPrice?: number; childPrice?: number }
 
 export interface StartingPrices {
   room: number | null

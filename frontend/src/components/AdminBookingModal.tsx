@@ -7,6 +7,7 @@ import {
   statusTone,
   typeLabel,
 } from '../lib/adminBookings'
+import { formatTime } from '../lib/boating'
 
 const STATUS_ACTIONS = [
   {
@@ -121,8 +122,11 @@ export function AdminBookingModal({
   const strong = light ? 'text-[#0a0a0a]' : 'text-white'
   const image = !imageFailed ? booking.item?.image : null
   const title = booking.item?.name ?? `${typeLabel(booking.type)} #${booking.itemId}`
-  // The driver option is already part of the vehicle's detail line.
-  const extras = Object.entries(booking.extras ?? {}).filter(([key]) => key !== 'withDriver')
+  const boat = booking.boat
+  // The driver option is already part of the vehicle's detail line; boat extras are shown as boat details.
+  const extras = boat
+    ? []
+    : Object.entries(booking.extras ?? {}).filter(([key]) => key !== 'withDriver')
 
   async function copyId() {
     try {
@@ -150,9 +154,57 @@ export function AdminBookingModal({
         '—'
       ),
     },
+    ...(booking.guestEmail
+      ? [
+          {
+            label: 'Email',
+            value: (
+              <a
+                href={`mailto:${booking.guestEmail}`}
+                className="underline-offset-4 hover:underline"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {booking.guestEmail}
+              </a>
+            ),
+          },
+        ]
+      : []),
     { label: 'Date', value: formatLongDate(String(booking.date)) },
-    ...(booking.slot ? [{ label: 'Time slot', value: booking.slot }] : []),
-    { label: 'Guests', value: booking.guests },
+    ...(boat
+      ? [
+          { label: 'PNR', value: <span className="font-mono">{boat.pnr ?? '—'}</span> },
+          {
+            label: 'Trip',
+            value:
+              [
+                boat.slotName,
+                boat.startTime &&
+                  (boat.endTime
+                    ? `${formatTime(boat.startTime)} – ${formatTime(boat.endTime)}`
+                    : formatTime(boat.startTime)),
+              ]
+                .filter(Boolean)
+                .join(' · ') || '—',
+          },
+          ...(boat.reportingTime
+            ? [{ label: 'Reporting', value: formatTime(boat.reportingTime) }]
+            : []),
+          ...(boat.departurePoint ? [{ label: 'Departure', value: boat.departurePoint }] : []),
+          {
+            label: 'Passengers',
+            value: `${boat.adultSeats} adult${boat.adultSeats === 1 ? '' : 's'}${
+              boat.childSeats
+                ? ` + ${boat.childSeats} child${boat.childSeats === 1 ? '' : 'ren'}`
+                : ''
+            }`,
+          },
+          { label: 'Seats', value: boat.seats.length ? boat.seats.join(', ') : '—' },
+        ]
+      : [
+          ...(booking.slot ? [{ label: 'Time slot', value: booking.slot }] : []),
+          { label: 'Guests', value: booking.guests },
+        ]),
     { label: 'Booked on', value: formatDateTime(String(booking.createdAt)) },
     ...extras.map(([key, value]) => ({ label: humanizeKey(key), value: formatExtra(value) })),
   ]

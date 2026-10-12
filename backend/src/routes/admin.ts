@@ -3,6 +3,7 @@ import { timingSafeEqual } from 'crypto';
 import { createAdminToken, getAdminCredentials, requireAdmin } from '../auth.js';
 import { pool } from '../db.js';
 import { parseJson } from '../mappers.js';
+import { deleteUpload, saveDataUrlImage, UploadError } from '../uploads.js';
 
 const router = Router();
 
@@ -61,7 +62,35 @@ function bookedItemDetail(b: Record<string, unknown>) {
   }
 }
 
+function seatList(value: unknown): number[] {
+  const parsed = Array.isArray(value) ? value : parseJson(value, [] as unknown[]);
+  return Array.isArray(parsed) ? parsed.map(Number).filter((n) => Number.isInteger(n) && n > 0) : [];
+}
+
+function hhmm(value: unknown) {
+  return value != null ? String(value).slice(0, 5) : null;
+}
+
+function boatDetails(b: Record<string, unknown>, extras: Record<string, unknown> | null) {
+  if (b.booking_type !== 'boat') return null;
+  const adultSeats = b.adult_seats != null ? Number(b.adult_seats) : Number(extras?.adultSeats ?? b.guests ?? 0);
+  const childSeats = b.child_seats != null ? Number(b.child_seats) : Number(extras?.childSeats ?? 0);
+  const seats = seatList(b.selected_seats);
+  return {
+    pnr: (b.pnr_id as string | null) ?? (extras?.pnr as string | undefined) ?? null,
+    slotName: (b.slot_name as string | null) ?? (extras?.slotName as string | undefined) ?? null,
+    startTime: hhmm(b.slot_start_time) ?? hhmm(b.slot),
+    endTime: hhmm(b.slot_end_time),
+    reportingTime: hhmm(b.slot_reporting_time),
+    adultSeats,
+    childSeats,
+    seats: seats.length ? seats : seatList(extras?.seats),
+    departurePoint: (b.boat_departure_point as string | null) ?? null,
+  };
+}
+
 function mapBooking(b: Record<string, unknown>) {
+  const extras = parseJson(b.extras, null as Record<string, unknown> | null);
   return {
     id: b.id,
     confirmationId: b.confirmation_id,
@@ -73,9 +102,11 @@ function mapBooking(b: Record<string, unknown>) {
     status: b.status,
     guestName: b.guest_name,
     guestPhone: b.guest_phone,
+    guestEmail: b.guest_email ?? null,
     totalAmount: b.total_amount != null ? Number(b.total_amount) : null,
     createdAt: b.created_at,
-    extras: parseJson(b.extras, null as Record<string, unknown> | null),
+    extras,
+    boat: boatDetails(b, extras),
     item:
       b.item_name != null
         ? {
@@ -95,11 +126,14 @@ router.get('/bookings', requireAdmin, async (_req, res) => {
               COALESCE(r.images, v.images, bt.images) AS item_images,
               r.category AS room_category, r.room_type, r.location AS room_location,
               v.type AS vehicle_type, v.with_driver AS vehicle_with_driver, v.seats AS vehicle_seats,
-              bt.type AS boat_type, bt.seats AS boat_seats
+              bt.type AS boat_type, bt.seats AS boat_seats, bt.departure_point AS boat_departure_point,
+              ts.name AS slot_name, ts.start_time AS slot_start_time, ts.end_time AS slot_end_time,
+              ts.reporting_time AS slot_reporting_time
          FROM bookings b
          LEFT JOIN rooms r ON b.booking_type = 'room' AND r.id = b.item_id
          LEFT JOIN vehicles v ON b.booking_type = 'vehicle' AND v.id = b.item_id
          LEFT JOIN boats bt ON b.booking_type = 'boat' AND bt.id = b.item_id
+         LEFT JOIN boat_time_slots ts ON b.booking_type = 'boat' AND ts.id = b.time_slot_id
         ORDER BY b.created_at DESC
         LIMIT 500`
     );
@@ -184,7 +218,9 @@ router.get('/catalog', requireAdmin, async (_req, res) => {
         `SELECT id, name, type, with_driver, available, price_per_day FROM vehicles
          ORDER BY available DESC, rating DESC, id`
       ),
-      pool.query(`SELECT id, name, type, seats, price FROM boats ORDER BY rating DESC, id`),
+      pool.query(
+        `SELECT id, name, type, coach_type, seats, price, price_child FROM boats ORDER BY rating DESC, id`
+      ),
     ]);
     res.json({
       rooms: (rooms as Record<string, unknown>[]).map((r) => ({
@@ -205,8 +241,9 @@ router.get('/catalog', requireAdmin, async (_req, res) => {
       boats: (boats as Record<string, unknown>[]).map((b) => ({
         id: b.id,
         name: b.name,
-        detail: `${b.type} · ${b.seats} seats`,
+        detail: `${b.coach_type ?? b.type} · ${b.seats} seats`,
         price: Number(b.price),
+        childPrice: Number(b.price_child),
       })),
     });
   } catch (err) {
@@ -249,6 +286,17 @@ router.patch('/catalog/:kind/:id/price', requireAdmin, async (req, res) => {
       sets.push('extra_guest_price = :extra');
       params.extra = round(extra);
     }
+    if (body.childPrice != null) {
+      if (kind !== 'boats') {
+        return res.status(400).json({ error: 'Child price applies to boats only' });
+      }
+      const child = Number(body.childPrice);
+      if (!Number.isFinite(child) || child < 0 || child > 10_000_000) {
+        return res.status(400).json({ error: 'Child price must be ₹0 or more' });
+      }
+      sets.push('price_child = :child');
+      params.child = round(child);
+    }
     if (!sets.length) {
       return res.status(400).json({ error: 'Nothing to update' });
     }
@@ -261,10 +309,84 @@ router.patch('/catalog/:kind/:id/price', requireAdmin, async (req, res) => {
     if (!info.affectedRows) {
       return res.status(404).json({ error: 'Item not found' });
     }
-    res.json({ kind, id, price: params.price, extraGuestPrice: params.extra });
+    res.json({
+      kind,
+      id,
+      price: params.price,
+      extraGuestPrice: params.extra,
+      childPrice: params.child,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to update price' });
+  }
+});
+
+const GALLERY_SLOTS = ['exterior', 'bedroom', 'bathroom', 'living'] as const;
+type GallerySlot = (typeof GALLERY_SLOTS)[number];
+
+function isGallerySlot(value: string): value is GallerySlot {
+  return (GALLERY_SLOTS as readonly string[]).includes(value);
+}
+
+async function loadRoomGallery(id: number) {
+  const [rows] = await pool.query('SELECT room_gallery FROM rooms WHERE id = :id', { id });
+  const row = (rows as Record<string, unknown>[])[0];
+  if (!row) return null;
+  return parseJson(row.room_gallery, {} as Partial<Record<GallerySlot, string>>) ?? {};
+}
+
+function parseGalleryParams(params: Record<string, unknown>) {
+  const id = Number(params.id);
+  const slot = String(params.slot);
+  if (!Number.isInteger(id) || id <= 0) return { error: 'Invalid room id' } as const;
+  if (!isGallerySlot(slot)) return { error: 'Invalid photo type' } as const;
+  return { id, slot } as const;
+}
+
+router.put('/rooms/:id/gallery/:slot', requireAdmin, async (req, res) => {
+  const parsed = parseGalleryParams(req.params);
+  if ('error' in parsed) return res.status(400).json({ error: parsed.error });
+  const { id, slot } = parsed;
+  try {
+    const gallery = await loadRoomGallery(id);
+    if (!gallery) return res.status(404).json({ error: 'Room not found' });
+
+    const url = await saveDataUrlImage(req.body?.image, 'rooms', `room-${id}-${slot}`);
+    const previous = gallery[slot];
+    gallery[slot] = url;
+    await pool.query('UPDATE rooms SET room_gallery = :gallery WHERE id = :id', {
+      id,
+      gallery: JSON.stringify(gallery),
+    });
+    await deleteUpload(previous);
+    res.json({ id, slot, url, gallery });
+  } catch (err) {
+    if (err instanceof UploadError) return res.status(400).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: 'Failed to save photo' });
+  }
+});
+
+router.delete('/rooms/:id/gallery/:slot', requireAdmin, async (req, res) => {
+  const parsed = parseGalleryParams(req.params);
+  if ('error' in parsed) return res.status(400).json({ error: parsed.error });
+  const { id, slot } = parsed;
+  try {
+    const gallery = await loadRoomGallery(id);
+    if (!gallery) return res.status(404).json({ error: 'Room not found' });
+
+    const previous = gallery[slot];
+    delete gallery[slot];
+    await pool.query('UPDATE rooms SET room_gallery = :gallery WHERE id = :id', {
+      id,
+      gallery: Object.keys(gallery).length ? JSON.stringify(gallery) : null,
+    });
+    await deleteUpload(previous);
+    res.json({ id, slot, gallery });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to reset photo' });
   }
 });
 

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#000000" />
+    <title>Pondy Hub — Offline</title>
+    <style>
+      html, body { height: 100%; margin: 0; }
+      body {
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 16px; padding: 24px; box-sizing: border-box; text-align: center;
+        background: #d9e4ea; color: #0c1419;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      }
+      img { width: 88px; height: 88px; border-radius: 20px; }
+      h1 { margin: 0; font-size: 22px; }
+      p { margin: 0; max-width: 320px; line-height: 1.5; opacity: 0.75; }
+      button {
+        margin-top: 8px; padding: 12px 28px; border: 0; border-radius: 999px;
+        background: #000; color: #fff; font-size: 15px; font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <img src="/pwa-192.png" alt="Pondy Hub" />
+    <h1>You're offline</h1>
+    <p>Pondy Hub needs an internet connection. Check your connection and try again.</p>
+    <button onclick="location.reload()">Try again</button>
+  </body>
+</html>
