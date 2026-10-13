@@ -316,7 +316,7 @@ export function AdminDashboardPage() {
                 light ? 'text-[#0a0a0a]' : 'text-white'
               }`}
             >
-              Pondy Hub
+              Pondy Tripora
             </Link>
             <span
               className={`rounded-full px-2.5 py-1 text-[10px] font-semibold tracking-[0.12em] uppercase ${

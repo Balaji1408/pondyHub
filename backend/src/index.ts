@@ -7,6 +7,6 @@ ensureSchema()
   .catch((err) => console.error('Schema migration failed', err))
   .finally(() => {
     app.listen(PORT, () => {
-      console.log(`Pondy Hub API on http://localhost:${PORT}`);
+      console.log(`Pondy Tripora API on http://localhost:${PORT}`);
     });
   });

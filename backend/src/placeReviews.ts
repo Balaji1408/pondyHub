@@ -1,4 +1,4 @@
-/** Curated Google-style ratings for Pondy Hub places (used when live Places API is unavailable). */
+/** Curated Google-style ratings for Pondy Tripora places (used when live Places API is unavailable). */
 export const PLACE_GOOGLE_META: Record<
   string,
   { rating: number; reviewCount: number; snippet: string }

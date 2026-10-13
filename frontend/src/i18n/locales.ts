@@ -20,7 +20,7 @@ export const LOCALE_SHORT: Record<Locale, string> = {
 type Dict = Record<string, string>
 
 const en: Dict = {
-  'brand.name': 'Pondy Hub',
+  'brand.name': 'Pondy Tripora',
   'nav.rooms': 'Rooms',
   'nav.vehicles': 'Vehicles',
   'nav.boating': 'Boating',
@@ -65,16 +65,16 @@ const en: Dict = {
   'home.marquee': 'White Town · Promenade · Serenity · Paradise · Auroville · ECR · Chunnambar · Goubert',
 
   'footer.blurb': 'Stay, ride, sail, and explore Pondicherry — curated for couples, families, and friends.',
-  'footer.copy': 'Demo bookings — no payments · © {year} Pondy Hub',
+  'footer.copy': 'Demo bookings — no payments · © {year} Pondy Tripora',
   'footer.tagline': 'Your coastal escape starts here',
   'footer.book': 'Book',
   'footer.explore': 'Explore',
   'footer.follow': 'Follow',
   'footer.home': 'Home',
   'footer.demo': 'Demo site — bookings are free, no payment collected.',
-  'footer.rights': '© {year} Pondy Hub',
+  'footer.rights': '© {year} Pondy Tripora',
   'footer.top': 'Back to top',
-  'planner.label': 'Pondy Hub Planner',
+  'planner.label': 'Pondy Tripora Planner',
   'planner.body': 'Answer two quick questions and we line up stays, rides and boats for you.',
   'planner.cta': 'Plan my trip',
 
@@ -330,7 +330,7 @@ const hi: Dict = {
     'यात्री जो अपनी पॉन्डिचेरी यात्रा एक जगह प्लान करते हैं — ठहर, सवारी, नावें और स्थान।',
 
   'footer.blurb': 'रुकें, सवारी करें, पाल चलाएँ और पॉन्डिचेरी घूमें — जोड़े, परिवार और दोस्तों के लिए।',
-  'footer.copy': 'डेमो बुकिंग — कोई भुगतान नहीं · © {year} Pondy Hub',
+  'footer.copy': 'डेमो बुकिंग — कोई भुगतान नहीं · © {year} Pondy Tripora',
   'footer.tagline': 'आपकी तटीय छुट्टी यहीं से शुरू होती है',
   'footer.book': 'बुक करें',
   'footer.explore': 'घूमें',
@@ -338,7 +338,7 @@ const hi: Dict = {
   'footer.home': 'होम',
   'footer.demo': 'डेमो साइट — बुकिंग मुफ़्त है, कोई भुगतान नहीं लिया जाता।',
   'footer.top': 'ऊपर जाएँ',
-  'planner.label': 'Pondy Hub प्लानर',
+  'planner.label': 'Pondy Tripora प्लानर',
   'planner.body': 'दो छोटे सवालों के जवाब दें — ठहरना, सवारी और नाव हम आपके लिए तैयार कर देंगे।',
   'planner.cta': 'मेरी यात्रा प्लान करें',
 
@@ -498,7 +498,7 @@ const te: Dict = {
     'తమ పాండిచ్చేరి యాత్రను ఒకే చోట ప్లాన్ చేసుకునే ప్రయాణికులతో చేరండి — స్టేలు, రైడ్లు, పడవలు మరియు స్థలాలు.',
 
   'footer.blurb': 'ఉండండి, రైడ్ చేయండి, నావికా విహారం చేసి పాండిచ్చేరి అన్వేషించండి — జంటలు, కుటుంబాలు, స్నేహితుల కోసం.',
-  'footer.copy': 'డెమో బుకింగ్‌లు — చెల్లింపులు లేవు · © {year} Pondy Hub',
+  'footer.copy': 'డెమో బుకింగ్‌లు — చెల్లింపులు లేవు · © {year} Pondy Tripora',
   'footer.tagline': 'మీ తీర విహారం ఇక్కడే మొదలవుతుంది',
   'footer.book': 'బుక్ చేయండి',
   'footer.explore': 'అన్వేషించండి',
@@ -506,7 +506,7 @@ const te: Dict = {
   'footer.home': 'హోమ్',
   'footer.demo': 'డెమో సైట్ — బుకింగ్‌లు ఉచితం, ఎలాంటి చెల్లింపు లేదు.',
   'footer.top': 'పైకి వెళ్ళండి',
-  'planner.label': 'Pondy Hub ప్లానర్',
+  'planner.label': 'Pondy Tripora ప్లానర్',
   'planner.body': 'రెండు చిన్న ప్రశ్నలకు జవాబివ్వండి — బస, వాహనాలు, పడవలు మేమే సిద్ధం చేస్తాం.',
   'planner.cta': 'నా ట్రిప్ ప్లాన్ చేయండి',
 
@@ -666,7 +666,7 @@ const kn: Dict = {
     'ತಮ್ಮ ಪಾಂಡಿಚೆರಿ ಪ್ರವಾಸವನ್ನು ಒಂದೇ ಕಡೆ ಯೋಜಿಸುವ ಪ್ರವಾಸಿಗರೊಂದಿಗೆ ಸೇರಿ — ಸ್ಟೇಗಳು, ಸವಾರಿಗಳು, ದೋಣಿಗಳು ಮತ್ತು ಸ್ಥಳಗಳು.',
 
   'footer.blurb': 'ತಂಗಿರಿ, ಸವಾರಿ ಮಾಡಿ, ದೋಣಿ ಹತ್ತಿ ಪಾಂಡಿಚೆರಿ ಅನ್ವೇಷಿಸಿ — ಜೋಡಿಗಳು, ಕುಟುಂಬಗಳು ಮತ್ತು ಸ್ನೇಹಿತರಿಗಾಗಿ.',
-  'footer.copy': 'ಡೆಮೊ ಬುಕಿಂಗ್‌ಗಳು — ಪಾವತಿ ಇಲ್ಲ · © {year} Pondy Hub',
+  'footer.copy': 'ಡೆಮೊ ಬುಕಿಂಗ್‌ಗಳು — ಪಾವತಿ ಇಲ್ಲ · © {year} Pondy Tripora',
   'footer.tagline': 'ನಿಮ್ಮ ಕರಾವಳಿ ಪ್ರವಾಸ ಇಲ್ಲಿಂದ ಆರಂಭ',
   'footer.book': 'ಬುಕ್ ಮಾಡಿ',
   'footer.explore': 'ಅನ್ವೇಷಿಸಿ',
@@ -674,7 +674,7 @@ const kn: Dict = {
   'footer.home': 'ಮುಖಪುಟ',
   'footer.demo': 'ಡೆಮೊ ಸೈಟ್ — ಬುಕಿಂಗ್ ಉಚಿತ, ಯಾವುದೇ ಪಾವತಿ ಇಲ್ಲ.',
   'footer.top': 'ಮೇಲಕ್ಕೆ',
-  'planner.label': 'Pondy Hub ಪ್ಲಾನರ್',
+  'planner.label': 'Pondy Tripora ಪ್ಲಾನರ್',
   'planner.body': 'ಎರಡು ಸಣ್ಣ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉತ್ತರಿಸಿ — ತಂಗುವಿಕೆ, ವಾಹನ, ದೋಣಿ ನಾವೇ ಸಿದ್ಧಪಡಿಸುತ್ತೇವೆ.',
   'planner.cta': 'ನನ್ನ ಪ್ರವಾಸ ಯೋಜಿಸಿ',
 
@@ -834,7 +834,7 @@ const ta: Dict = {
     'தங்கள் பாண்டிச்சேரி பயணத்தை ஒரே இடத்தில் திட்டமிடும் பயணிகளுடன் சேருங்கள் — தங்குமிடங்கள், சவாரிகள், படகுகள் மற்றும் இடங்கள்.',
 
   'footer.blurb': 'தங்குங்கள், சவாரி செய்யுங்கள், படகு ஏறி பாண்டிச்சேரியை ஆராயுங்கள் — ஜோடிகள், குடும்பங்கள், நண்பர்களுக்காக.',
-  'footer.copy': 'டெமோ முன்பதிவுகள் — பணம் இல்லை · © {year} Pondy Hub',
+  'footer.copy': 'டெமோ முன்பதிவுகள் — பணம் இல்லை · © {year} Pondy Tripora',
   'footer.tagline': 'உங்கள் கடற்கரை பயணம் இங்கே தொடங்குகிறது',
   'footer.book': 'முன்பதிவு',
   'footer.explore': 'ஆராயுங்கள்',
@@ -842,7 +842,7 @@ const ta: Dict = {
   'footer.home': 'முகப்பு',
   'footer.demo': 'டெமோ தளம் — முன்பதிவு இலவசம், பணம் வசூலிக்கப்படாது.',
   'footer.top': 'மேலே செல்ல',
-  'planner.label': 'Pondy Hub திட்டமிடல்',
+  'planner.label': 'Pondy Tripora திட்டமிடல்',
   'planner.body': 'இரண்டு சிறிய கேள்விகளுக்கு பதில் சொல்லுங்கள் — தங்குமிடம், வாகனம், படகு எல்லாம் நாங்கள் ஏற்பாடு செய்கிறோம்.',
   'planner.cta': 'என் பயணத்தை திட்டமிடு',
 

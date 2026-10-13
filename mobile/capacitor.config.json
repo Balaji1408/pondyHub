@@ -1,9 +1,9 @@
 {
   "appId": "com.pondyhub.app",
-  "appName": "Pondy Hub",
+  "appName": "Pondy Tripora",
   "webDir": "www",
   "server": {
-    "url": "https://853d-2409-40f4-17-c8a6-b4c9-e286-a4-37b2.ngrok-free.app/",
+    "url": "https://pondytripora.netlify.app/",
     "errorPath": "offline.html"
   },
   "android": {

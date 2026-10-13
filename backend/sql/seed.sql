@@ -1,4 +1,4 @@
--- Seed data for hub_1 — Pondicherry / Pondy Hub
+-- Seed data for hub_1 — Pondicherry / Pondy Tripora
 USE hub_1;
 
 INSERT INTO rooms (name, slug, category, room_type, min_members, max_members, price_per_night, description, location, images, amenities, rating) VALUES

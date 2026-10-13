@@ -343,7 +343,7 @@ function PlanScene({ still }: { still: boolean }) {
             </ul>
           </motion.div>
 
-          <p className="mt-5 font-display text-4xl opacity-30">Pondy Hub</p>
+          <p className="mt-5 font-display text-4xl opacity-30">Pondy Tripora</p>
         </motion.div>
       </motion.div>
     </motion.div>

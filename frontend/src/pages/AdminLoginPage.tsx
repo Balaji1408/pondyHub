@@ -47,7 +47,7 @@ export function AdminLoginPage() {
           to="/"
           className="font-sans text-sm font-bold tracking-[0.18em] uppercase transition hover:opacity-70"
         >
-          Pondy Hub
+          Pondy Tripora
         </Link>
         <Link
           to="/"

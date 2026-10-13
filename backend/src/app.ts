@@ -29,7 +29,9 @@ app.get('/api/health', async (_req, res) => {
     res.json({ ok: true, db: 'hub_1' });
   } catch (err) {
     console.error(err);
-    res.status(503).json({ ok: false, error: 'Database unreachable' });
+    res
+      .status(503)
+      .json({ ok: false, error: 'Database unreachable', code: (err as { code?: string }).code });
   }
 });
 

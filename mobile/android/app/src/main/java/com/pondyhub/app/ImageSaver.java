@@ -19,7 +19,7 @@ import java.io.OutputStream;
 /** Lets the web app save generated images (booking tickets), which a WebView can't download on its own. */
 public class ImageSaver {
 
-    private static final String ALBUM = "Pondy Hub";
+    private static final String ALBUM = "Pondy Tripora";
 
     private final Activity activity;
 
@@ -82,7 +82,7 @@ public class ImageSaver {
     }
 
     private static String sanitize(String fileName) {
-        String name = fileName == null || fileName.isEmpty() ? "PondyHub-Ticket.png" : fileName;
+        String name = fileName == null || fileName.isEmpty() ? "PondyTripora-Ticket.png" : fileName;
         name = name.replaceAll("[^A-Za-z0-9._-]", "_");
         return name.toLowerCase().endsWith(".png") ? name : name + ".png";
     }

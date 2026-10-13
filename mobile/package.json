@@ -2,7 +2,7 @@
   "name": "pondy-hub-mobile",
   "private": true,
   "version": "1.0.0",
-  "description": "Android WebView wrapper for the Pondy Hub website",
+  "description": "Android WebView wrapper for the Pondy Tripora website",
   "scripts": {
     "sync": "cap sync android",
     "apk": "cap sync android && cd android && gradlew.bat assembleDebug"

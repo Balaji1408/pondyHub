@@ -76,8 +76,8 @@ export function BoatTicketModal({
     setDownloading(true)
     try {
       const dataUrl = await toPng(cardRef.current, { cacheBust: true, backgroundColor: '#ffffff' })
-      const fileName = `PondyHub-Boating-${booking.pnr}.png`
-      // Android WebViews ignore <a download>; the Pondy Hub app exposes a native saver instead.
+      const fileName = `PondyTripora-Boating-${booking.pnr}.png`
+      // Android WebViews ignore <a download>; the Pondy Tripora app exposes a native saver instead.
       if (window.PondyHubApp?.saveImage) {
         window.PondyHubApp.saveImage(dataUrl, fileName)
         return
@@ -112,7 +112,7 @@ export function BoatTicketModal({
           <div className="mb-6 text-center">
             <div className="mb-4 flex items-center justify-center gap-2 text-slate-900">
               <SunsetMark className="h-9 w-9" />
-              <span className="text-sm font-black tracking-[0.3em] uppercase">Pondy Hub</span>
+              <span className="text-sm font-black tracking-[0.3em] uppercase">Pondy Tripora</span>
             </div>
             <h2 className="text-2xl font-black tracking-tighter text-slate-800 uppercase italic">
               {t('boating.bookingConfirmed')}

@@ -1,4 +1,4 @@
-# Pondy Hub
+# Pondy Tripora
 
 BookMyShow-style landing site for Pondicherry stays, vehicle rentals, boating, cafés, beaches, bars, food streets, and White Town.
 

@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Pondy Hub</string>
-    <string name="title_activity_main">Pondy Hub</string>
+    <string name="app_name">Pondy Tripora</string>
+    <string name="title_activity_main">Pondy Tripora</string>
     <string name="package_name">com.pondyhub.app</string>
     <string name="custom_url_scheme">com.pondyhub.app</string>
 </resources>

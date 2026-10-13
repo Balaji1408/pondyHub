@@ -1,4 +1,4 @@
--- Pondy Hub schema for database: hub_1
+-- Pondy Tripora schema for database: hub_1
 -- Import in phpMyAdmin after selecting hub_1
 
 CREATE DATABASE IF NOT EXISTS hub_1 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
