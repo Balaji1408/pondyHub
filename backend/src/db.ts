@@ -300,6 +300,221 @@ async function ensureGuideSchema() {
   console.log('Seeded default guest guide');
 }
 
+/** Wikimedia Commons photos of the real Pondicherry landmarks (stable FilePath URLs). */
+function pondyWikiImage(file: string) {
+  return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(file).replace(/%2C/g, ',').replace(/%28/g, '(').replace(/%29/g, ')')}?width=1200`;
+}
+
+async function ensurePlacesTempleSchema() {
+  if (!(await tableExists('places'))) return;
+
+  // Widen kind ENUM for temples & churches on existing DBs.
+  await pool.query(`
+    ALTER TABLE places
+    MODIFY COLUMN kind ENUM(
+      'cafe','restaurant','roadside','beach','bar','foodstreet','whitetown','temple','church'
+    ) NOT NULL`);
+
+  // Older seed used a placeholder name without a good public photo — rename in place.
+  await pool.query(
+    `UPDATE places
+     SET name = 'Mulanathaswami Temple',
+         location = 'Bahour',
+         description = 'ASI-protected Shiva temple in Bahour — quiet courtyards and classic stone work.',
+         best_visit_time = 'Morning before the heat'
+     WHERE name = 'Kamakshi Amman Temple'`
+  );
+
+  const [existing] = await pool.query(
+    `SELECT name FROM places WHERE kind IN ('temple','church')`
+  );
+  const have = new Set((existing as { name: string }[]).map((r) => r.name));
+
+  const seeds: {
+    name: string;
+    kind: 'temple' | 'church';
+    description: string;
+    location: string;
+    opensAt: string;
+    closesAt: string;
+    bestVisitTime: string;
+    images: string[];
+    rating: number;
+  }[] = [
+    {
+      name: 'Manakula Vinayagar Temple',
+      kind: 'temple',
+      description:
+        'Centuries-old Ganesha temple in White Town — painted ceilings and a golden tower.',
+      location: 'White Town',
+      opensAt: '05:30:00',
+      closesAt: '21:00:00',
+      bestVisitTime: 'Morning aarti · evenings for the lit gopuram',
+      images: [
+        pondyWikiImage('Pondicherry_Manakula_Vinayagar_Temple.JPG'),
+        pondyWikiImage('Arulmigu_Manakula_Vinayagar_Temple_at_Pondichery.jpg'),
+      ],
+      rating: 4.8,
+    },
+    {
+      name: 'Vedapureeswarar Temple',
+      kind: 'temple',
+      description: 'Historic Shiva temple near the old town with classic Dravidian architecture.',
+      location: 'Mission Street area',
+      opensAt: '06:00:00',
+      closesAt: '20:30:00',
+      bestVisitTime: 'Early morning for quieter darshan',
+      images: [
+        pondyWikiImage('Entrance_of_Shri_Vedapuriswarar_Temple.jpg'),
+        pondyWikiImage('Vedapureeswarar_temple,_Pondicherry_(1).jpg'),
+      ],
+      rating: 4.6,
+    },
+    {
+      name: 'Sri Varadaraja Perumal Temple',
+      kind: 'temple',
+      description:
+        'Peaceful Vishnu temple popular with locals — colourful mandapam and evening lamps.',
+      location: 'Near Goubert Market',
+      opensAt: '06:00:00',
+      closesAt: '20:00:00',
+      bestVisitTime: 'Sunset aarti',
+      images: [
+        pondyWikiImage('Varadharajaperumal_temple,_Puducherry_(2).jpg'),
+        pondyWikiImage('Varadharajaperumal_temple,_Puducherry_(3).jpg'),
+      ],
+      rating: 4.5,
+    },
+    {
+      name: 'Mulanathaswami Temple',
+      kind: 'temple',
+      description:
+        'ASI-protected Shiva temple in Bahour — quiet courtyards and classic stone work.',
+      location: 'Bahour',
+      opensAt: '05:30:00',
+      closesAt: '21:00:00',
+      bestVisitTime: 'Morning before the heat',
+      images: [
+        pondyWikiImage('Mulanathaswami_Temple,Bahour_01.jpg'),
+        pondyWikiImage('Mulanathaswami_Temple,_Bahour,_Puducherry,_India_01.JPG'),
+      ],
+      rating: 4.7,
+    },
+    {
+      name: 'Thirukameswarar Temple',
+      kind: 'temple',
+      description: 'Ancient Shiva temple at Villianur — stone carvings and a calm temple tank.',
+      location: 'Villianur',
+      opensAt: '06:00:00',
+      closesAt: '20:00:00',
+      bestVisitTime: 'Morning visit before the heat',
+      images: [
+        pondyWikiImage('Kameeswarar_temple_(1).jpg'),
+        pondyWikiImage('Kameeswarar_temple_(8).jpg'),
+      ],
+      rating: 4.6,
+    },
+    {
+      name: 'Basilica of the Sacred Heart of Jesus',
+      kind: 'church',
+      description:
+        'Gothic basilica famous for stained-glass panels — one of Pondy’s most photographed churches.',
+      location: 'South Boulevard',
+      opensAt: '06:00:00',
+      closesAt: '20:00:00',
+      bestVisitTime: 'Late afternoon light through the glass',
+      images: [
+        pondyWikiImage('Sacred_Heart_-_Basilica.JPG'),
+        pondyWikiImage('The_Sacred_Heart_Basillica_church,_Puducherry.jpg'),
+      ],
+      rating: 4.9,
+    },
+    {
+      name: 'Immaculate Conception Cathedral',
+      kind: 'church',
+      description:
+        'The main cathedral of Pondicherry — pastel façade and a serene nave in the heart of town.',
+      location: 'Cathedral Street / White Town',
+      opensAt: '06:00:00',
+      closesAt: '19:30:00',
+      bestVisitTime: 'Morning mass · golden hour outside',
+      images: [
+        pondyWikiImage('Puducherry_Immaculate_Conception_Cathedral.jpg'),
+        pondyWikiImage(
+          'Immaculate_Conception_Cathedral_or_Rue_De_La_Cathedrale,_at_Heritage_Town,_Puducherry_01.jpg'
+        ),
+      ],
+      rating: 4.8,
+    },
+    {
+      name: 'Our Lady of Angels Church',
+      kind: 'church',
+      description:
+        'Also called Église de Notre Dame des Anges — soft yellow walls facing the sea breeze.',
+      location: 'Near Beach Road / White Town',
+      opensAt: '07:00:00',
+      closesAt: '19:00:00',
+      bestVisitTime: 'Evening for the lit façade',
+      images: [
+        pondyWikiImage('Eglise_de_Notre_Dame_des_Anges_-_PONDICHERRY.JPG'),
+        pondyWikiImage(
+          'Our_Lady_of_Angels_Church,_a_Greco_Roman_structure_at_White_town_in_Pondicherry_04.jpg'
+        ),
+      ],
+      rating: 4.7,
+    },
+  ];
+
+  for (const s of seeds) {
+    const imagesJson = JSON.stringify(s.images);
+    if (have.has(s.name)) {
+      await pool.query(
+        `UPDATE places
+         SET kind = :kind,
+             description = :description,
+             location = :location,
+             opens_at = :opensAt,
+             closes_at = :closesAt,
+             best_visit_time = :bestVisitTime,
+             images = :images,
+             rating = :rating
+         WHERE name = :name`,
+        {
+          name: s.name,
+          kind: s.kind,
+          description: s.description,
+          location: s.location,
+          opensAt: s.opensAt,
+          closesAt: s.closesAt,
+          bestVisitTime: s.bestVisitTime,
+          images: imagesJson,
+          rating: s.rating,
+        }
+      );
+      continue;
+    }
+    await pool.query(
+      `INSERT INTO places
+        (name, kind, description, location, opens_at, closes_at, best_visit_time,
+         is_seafood_spot, near_room_id, near_beach_id, images, rating)
+       VALUES
+        (:name, :kind, :description, :location, :opensAt, :closesAt, :bestVisitTime,
+         0, NULL, NULL, :images, :rating)`,
+      {
+        name: s.name,
+        kind: s.kind,
+        description: s.description,
+        location: s.location,
+        opensAt: s.opensAt,
+        closesAt: s.closesAt,
+        bestVisitTime: s.bestVisitTime,
+        images: imagesJson,
+        rating: s.rating,
+      }
+    );
+  }
+}
+
 /** Adds columns and tables to existing databases that were imported before they existed. */
 export async function ensureSchema() {
   await ensureRoomColumns();
@@ -307,6 +522,7 @@ export async function ensureSchema() {
   await ensureCustomerSchema();
   await ensureUsersSchema();
   await ensureGuideSchema();
+  await ensurePlacesTempleSchema();
 }
 
 export async function pingDb() {

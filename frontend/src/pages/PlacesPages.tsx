@@ -63,6 +63,42 @@ export function CafesPage() {
   )
 }
 
+export function TemplesPage() {
+  const { t } = useLanguage()
+  const [cat, setCat] = useState('all')
+
+  const chips = useMemo(
+    () => [
+      { id: 'all', label: t('common.all') },
+      { id: 'temple', label: t('temples.temple') },
+      { id: 'church', label: t('temples.church') },
+    ],
+    [t],
+  )
+
+  const query = useMemo(
+    () => ({
+      kind: cat === 'all' ? 'temple,church' : cat,
+    }),
+    [cat],
+  )
+
+  const { data, isLoading, isError, error } = usePlaces(query)
+
+  return (
+    <ListingPageShell
+      eyebrow={t('common.explore')}
+      title={t('temples.title')}
+      description={t('temples.desc')}
+      filters={<CategoryChips chips={chips} active={cat} onChange={setCat} />}
+    >
+      {isLoading && <p className="px-6 py-16 text-muted md:px-16">{t('common.loading')}</p>}
+      {isError && <p className="px-6 py-16 text-red-600 md:px-16">{(error as Error).message}</p>}
+      <PlaceListings places={data} />
+    </ListingPageShell>
+  )
+}
+
 export function BeachesPage() {
   const { t } = useLanguage()
   const { data, isLoading, isError, error } = usePlaces({ kind: 'beach' })

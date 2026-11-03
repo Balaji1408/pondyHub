@@ -9,6 +9,8 @@ export type PlaceKind =
   | 'bar'
   | 'foodstreet'
   | 'whitetown'
+  | 'temple'
+  | 'church'
 export type BookingType = 'room' | 'vehicle' | 'boat'
 export type GallerySlot = 'exterior' | 'bedroom' | 'bathroom' | 'living'
 

@@ -12,6 +12,7 @@ import { BoatingPage } from './pages/BoatingPage'
 import { BoatDetailPage } from './pages/BoatDetailPage'
 import {
   CafesPage,
+  TemplesPage,
   BeachesPage,
   BarsPage,
   FoodStreetPage,
@@ -105,6 +106,7 @@ export default function App() {
                   <Route path="boating" element={<BoatingPage />} />
                   <Route path="boating/:id" element={<BoatDetailPage />} />
                   <Route path="cafes" element={<CafesPage />} />
+                  <Route path="temples" element={<TemplesPage />} />
                   <Route path="beaches" element={<BeachesPage />} />
                   <Route path="guide" element={<GuidePage />} />
                   <Route path="bars" element={<BarsPage />} />

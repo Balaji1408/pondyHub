@@ -153,7 +153,7 @@ CREATE TABLE boat_schedules (
 CREATE TABLE places (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(150) NOT NULL,
-  kind ENUM('cafe', 'restaurant', 'roadside', 'beach', 'bar', 'foodstreet', 'whitetown') NOT NULL,
+  kind ENUM('cafe', 'restaurant', 'roadside', 'beach', 'bar', 'foodstreet', 'whitetown', 'temple', 'church') NOT NULL,
   description TEXT,
   location VARCHAR(200),
   opens_at TIME NULL,

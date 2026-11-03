@@ -10,6 +10,7 @@ const linkDefs = [
   { to: '/boating', key: 'nav.boating' },
   { to: '/cafes', key: 'nav.cafes' },
   { to: '/beaches', key: 'nav.beaches' },
+  { to: '/temples', key: 'nav.temples' },
   { to: '/guide', key: 'nav.guide' },
   { to: '/bars', key: 'nav.bars' },
   { to: '/food-street', key: 'nav.foodStreet' },
@@ -88,7 +89,7 @@ export function Navbar() {
 
           <nav aria-label={t('nav.primary')} className="hidden min-w-0 flex-1 justify-center lg:flex">
             <ul className="flex items-center gap-0.5">
-              {links.slice(0, 6).map((l) => (
+              {links.slice(0, 7).map((l) => (
                 <li key={l.to}>
                   <NavLink
                     to={l.to}
@@ -126,7 +127,7 @@ export function Navbar() {
                 isLatin ? 'tracking-[0.16em] uppercase' : 'tracking-wide'
               }`}
             >
-              Owner
+              {t('nav.members')}
             </Link>
             <Link
               to="/admin/login"
@@ -222,7 +223,7 @@ export function Navbar() {
                   onClick={() => setOpen(false)}
                   className="block font-sans text-2xl font-bold tracking-tight text-white/55 transition hover:text-white sm:text-3xl"
                 >
-                  Owner login
+                  {t('nav.members')}
                 </Link>
                 <Link
                   to="/admin/login"
