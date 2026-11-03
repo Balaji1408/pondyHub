@@ -6,10 +6,19 @@
 
 [build.environment]
   NODE_VERSION = "22"
+  # VITE_* vars must also be set in Netlify UI — they are inlined at build time.
+  # Required for production: DB_*, ADMIN_SECRET, ADMIN_USER, ADMIN_PASSWORD,
+  # CUSTOMER_DEFAULT_PASSWORD. Optional: GOOGLE_MAPS_API_KEY, VITE_GOOGLE_MAPS_API_KEY.
 
 [functions]
   directory = "backend/netlify/functions"
   node_bundler = "esbuild"
+  # mysql2 uses dynamic requires; keep it external so the Lambda runtime loads it.
+  external_node_modules = ["mysql2"]
+
+[functions."api"]
+  # Allow cold start + DB ensureSchema on first request.
+  timeout = 26
 
 [[redirects]]
   from = "/api/*"

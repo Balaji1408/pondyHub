@@ -20,10 +20,14 @@ export function AdminLoginPage() {
     setLoading(true)
     try {
       const result = await api.adminLogin(username.trim(), password)
-      setAdminSession(result.token, result.username)
+      setAdminSession(result.token, result.username, result.role)
       navigate('/admin', {
         replace: true,
-        state: { loginToast: `Welcome back, ${result.username}` },
+        state: {
+          loginToast: `Welcome back, ${result.username}${
+            result.role === 'super_admin' ? ' (super admin)' : ''
+          }`,
+        },
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed')

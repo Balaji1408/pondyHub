@@ -1,4 +1,4 @@
-package com.pondyhub.app;
+package com.pondytripora.app;
 
 import android.app.Activity;
 import android.content.ContentResolver;

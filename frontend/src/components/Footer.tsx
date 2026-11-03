@@ -62,7 +62,7 @@ export function Footer() {
     <footer className="relative bg-black text-white">
       <div className="w-full px-5 sm:px-8 lg:px-12 xl:px-16">
         <div className="grid gap-14 pt-16 pb-12 md:pt-24 md:pb-16 lg:grid-cols-12 lg:gap-10">
-          <BlurFade className="flex flex-col justify-between gap-12 lg:col-span-5">
+          <BlurFade className="flex flex-col gap-12 lg:col-span-5">
             <div>
               <Link to="/" onClick={go('/')} aria-label={t('brand.name')} className="inline-flex">
                 <SunsetMark className="size-10 text-white" />
@@ -73,13 +73,6 @@ export function Footer() {
               <p className="mt-5 max-w-md text-[15px] leading-relaxed text-white/55">
                 {t('footer.blurb')}
               </p>
-            </div>
-
-            <div className="flex max-w-sm items-center gap-3">
-              <span className="grid size-11 shrink-0 place-items-center rounded-full border border-white/20">
-                <SunsetMark className="size-5 text-white/80" />
-              </span>
-              <p className="text-[13px] leading-snug text-white/60">{t('footer.demo')}</p>
             </div>
           </BlurFade>
 

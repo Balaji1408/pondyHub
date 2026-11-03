@@ -17,8 +17,13 @@ import {
   FoodStreetPage,
   WhiteTownPage,
 } from './pages/PlacesPages'
+import { GuidePage } from './pages/GuidePage'
 import { AdminLoginPage } from './pages/AdminLoginPage'
 import { AdminDashboardPage } from './pages/AdminDashboardPage'
+import { OwnerLoginPage } from './pages/OwnerLoginPage'
+import { OwnerRegisterPage } from './pages/OwnerRegisterPage'
+import { OwnerChangePasswordPage } from './pages/OwnerChangePasswordPage'
+import { OwnerPortalPage } from './pages/OwnerPortalPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -89,6 +94,10 @@ export default function App() {
               <Routes>
                 <Route path="admin/login" element={<AdminLoginPage />} />
                 <Route path="admin" element={<AdminDashboardPage />} />
+                <Route path="owner/login" element={<OwnerLoginPage />} />
+                <Route path="owner/register" element={<OwnerRegisterPage />} />
+                <Route path="owner/change-password" element={<OwnerChangePasswordPage />} />
+                <Route path="owner" element={<OwnerPortalPage />} />
                 <Route element={<Layout />}>
                   <Route index element={<HomePage />} />
                   <Route path="rooms" element={<RoomsPage />} />
@@ -97,6 +106,7 @@ export default function App() {
                   <Route path="boating/:id" element={<BoatDetailPage />} />
                   <Route path="cafes" element={<CafesPage />} />
                   <Route path="beaches" element={<BeachesPage />} />
+                  <Route path="guide" element={<GuidePage />} />
                   <Route path="bars" element={<BarsPage />} />
                   <Route path="food-street" element={<FoodStreetPage />} />
                   <Route path="white-town" element={<WhiteTownPage />} />

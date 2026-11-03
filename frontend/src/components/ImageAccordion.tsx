@@ -114,7 +114,7 @@ export function ImageAccordion({ images, alt }: ImageAccordionProps) {
               type="button"
               aria-pressed={isActive}
               onClick={() => select(i)}
-              className={`pointer-events-auto origin-bottom rounded-sm px-3 py-2 text-[10px] font-semibold tracking-[0.18em] uppercase transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] sm:text-[11px] ${
+              className={`pointer-events-auto origin-bottom cursor-pointer rounded-sm px-3 py-2 text-[10px] font-semibold tracking-[0.18em] uppercase transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] sm:text-[11px] ${
                 isActive
                   ? 'bg-white text-ink shadow-[0_10px_28px_-12px_rgb(0_0_0_/_0.55)]'
                   : 'bg-white/15 text-white/85 ring-1 ring-white/25 backdrop-blur-sm hover:bg-white/25 hover:text-white'

@@ -10,6 +10,7 @@ const linkDefs = [
   { to: '/boating', key: 'nav.boating' },
   { to: '/cafes', key: 'nav.cafes' },
   { to: '/beaches', key: 'nav.beaches' },
+  { to: '/guide', key: 'nav.guide' },
   { to: '/bars', key: 'nav.bars' },
   { to: '/food-street', key: 'nav.foodStreet' },
   { to: '/white-town', key: 'nav.whiteTown' },
@@ -87,7 +88,7 @@ export function Navbar() {
 
           <nav aria-label={t('nav.primary')} className="hidden min-w-0 flex-1 justify-center lg:flex">
             <ul className="flex items-center gap-0.5">
-              {links.slice(0, 5).map((l) => (
+              {links.slice(0, 6).map((l) => (
                 <li key={l.to}>
                   <NavLink
                     to={l.to}
@@ -119,6 +120,14 @@ export function Navbar() {
 
           <div className="flex items-center gap-2 md:gap-3">
             <LanguageSwitcher />
+            <Link
+              to="/owner/login"
+              className={`hidden text-[12px] font-semibold text-white/80 transition hover:text-white sm:inline ${
+                isLatin ? 'tracking-[0.16em] uppercase' : 'tracking-wide'
+              }`}
+            >
+              Owner
+            </Link>
             <Link
               to="/admin/login"
               className={`hidden text-[12px] font-semibold text-white transition hover:opacity-90 sm:inline ${
@@ -209,9 +218,16 @@ export function Navbar() {
                 style={{ animationDelay: `${0.05 * links.length}s` }}
               >
                 <Link
-                  to="/admin/login"
+                  to="/owner/login"
                   onClick={() => setOpen(false)}
                   className="block font-sans text-2xl font-bold tracking-tight text-white/55 transition hover:text-white sm:text-3xl"
+                >
+                  Owner login
+                </Link>
+                <Link
+                  to="/admin/login"
+                  onClick={() => setOpen(false)}
+                  className="mt-3 block font-sans text-2xl font-bold tracking-tight text-white/55 transition hover:text-white sm:text-3xl"
                 >
                   {t('nav.admin')}
                 </Link>

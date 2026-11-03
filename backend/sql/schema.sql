@@ -11,8 +11,37 @@ DROP TABLE IF EXISTS boat_schedules;
 DROP TABLE IF EXISTS boat_time_slots;
 DROP TABLE IF EXISTS boats;
 DROP TABLE IF EXISTS vehicles;
+DROP TABLE IF EXISTS customer_applications;
+DROP TABLE IF EXISTS customers;
 DROP TABLE IF EXISTS rooms;
+DROP TABLE IF EXISTS users;
 SET FOREIGN_KEY_CHECKS = 1;
+
+-- Admin / super-admin accounts (seeded on first API boot from ADMIN_USER / ADMIN_PASSWORD)
+CREATE TABLE users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(80) NOT NULL,
+  password_hash VARCHAR(200) NOT NULL,
+  role ENUM('super_admin','admin') NOT NULL DEFAULT 'admin',
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  created_by INT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_users_username (username),
+  INDEX idx_users_role (role)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE customers (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  mobile VARCHAR(10) NOT NULL,
+  password_hash VARCHAR(200) NULL,
+  status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+  must_change_password TINYINT(1) NOT NULL DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_customers_mobile (mobile)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE rooms (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -31,7 +60,32 @@ CREATE TABLE rooms (
   room_gallery JSON NULL,
   amenities JSON,
   rating DECIMAL(2, 1) DEFAULT 4.5,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  listing_status ENUM('published','pending','rejected') NOT NULL DEFAULT 'published',
+  owner_customer_id INT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_rooms_owner (owner_customer_id),
+  CONSTRAINT fk_rooms_owner FOREIGN KEY (owner_customer_id) REFERENCES customers(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE customer_applications (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  customer_id INT NOT NULL,
+  claim_type ENUM('existing','new_map') NOT NULL,
+  room_id INT NULL,
+  proposed_name VARCHAR(150) NULL,
+  proposed_address VARCHAR(300) NULL,
+  lat DECIMAL(10, 7) NULL,
+  lng DECIMAL(10, 7) NULL,
+  place_id VARCHAR(200) NULL,
+  map_url VARCHAR(500) NULL,
+  note TEXT NULL,
+  status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+  admin_note TEXT NULL,
+  reviewed_at TIMESTAMP NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_apps_customer (customer_id),
+  CONSTRAINT fk_apps_customer FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
+  CONSTRAINT fk_apps_room FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE vehicles (
@@ -115,6 +169,14 @@ CREATE TABLE places (
   INDEX idx_places_near_room (near_room_id),
   CONSTRAINT fk_places_room FOREIGN KEY (near_room_id) REFERENCES rooms(id) ON DELETE SET NULL,
   CONSTRAINT fk_places_beach FOREIGN KEY (near_beach_id) REFERENCES places(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE guide (
+  id TINYINT PRIMARY KEY DEFAULT 1,
+  title VARCHAR(200) NOT NULL,
+  subtitle TEXT NULL,
+  content JSON NOT NULL,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE bookings (

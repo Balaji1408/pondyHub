@@ -1,4 +1,4 @@
-package com.pondyhub.app;
+package com.pondytripora.app;
 
 import android.os.Bundle;
 import com.getcapacitor.BridgeActivity;

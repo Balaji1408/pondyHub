@@ -53,10 +53,15 @@ export function roomGallerySources(room: Room): Record<GallerySlot, string> {
   if (google.length > 0) {
     const pick = (i: number) => google[Math.min(i, google.length - 1)]!
     defaults = { exterior: pick(0), bedroom: pick(1), bathroom: pick(2), living: pick(3) }
+  } else if ((room.images?.length ?? 0) > 0) {
+    // Owner uploads / seed cover images — cycle through whatever photos exist.
+    const imgs = room.images.filter(Boolean)
+    const pick = (i: number) => imgs[Math.min(i, imgs.length - 1)]!
+    defaults = { exterior: pick(0), bedroom: pick(1), bathroom: pick(2), living: pick(3) }
   } else {
     const shots = ROOM_GALLERIES[room.slug] ?? DEFAULT_GALLERY
     defaults = {
-      exterior: ROOM_GALLERIES[room.slug]?.exterior ?? room.images[0] ?? DEFAULT_GALLERY.living,
+      exterior: ROOM_GALLERIES[room.slug]?.exterior ?? DEFAULT_GALLERY.living,
       bedroom: shots.bedroom,
       bathroom: shots.bathroom,
       living: shots.living,

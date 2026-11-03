@@ -28,7 +28,7 @@ async function enrichRoom(room: ReturnType<typeof mapRoom>) {
 router.get('/', async (req, res) => {
   try {
     const { category, roomType, minMembers, maxMembers } = req.query
-    const clauses: string[] = ['1=1']
+    const clauses: string[] = [`(listing_status = 'published' OR listing_status IS NULL)`]
     const params: Record<string, string | number> = {}
 
     if (category && typeof category === 'string') {
@@ -65,7 +65,10 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const id = Number(req.params.id)
-    const [rows] = await pool.query('SELECT * FROM rooms WHERE id = :id', { id })
+    const [rows] = await pool.query(
+      `SELECT * FROM rooms WHERE id = :id AND (listing_status = 'published' OR listing_status IS NULL)`,
+      { id },
+    )
     const list = rows as Record<string, unknown>[]
     if (!list.length) return res.status(404).json({ error: 'Room not found' })
 

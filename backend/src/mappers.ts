@@ -55,6 +55,8 @@ export function mapRoom(row: Record<string, unknown>) {
     gallery: parseJson(row.room_gallery, {} as Record<string, string>) ?? {},
     amenities: parseJson(row.amenities, [] as string[]),
     rating: Number(row.rating),
+    listingStatus: (row.listing_status as string) || 'published',
+    ownerCustomerId: row.owner_customer_id == null ? null : Number(row.owner_customer_id),
   };
 }
 

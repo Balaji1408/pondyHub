@@ -38,6 +38,90 @@ export interface Room {
   /** True when `images` are live Google Place Photos (HD via /api/google-photo). */
   photosFromGoogle?: boolean
   nearby?: unknown[]
+  listingStatus?: 'published' | 'pending' | 'rejected'
+  ownerCustomerId?: number | null
+  ownerName?: string | null
+  ownerMobile?: string | null
+}
+
+export type CustomerStatus = 'pending' | 'approved' | 'rejected'
+export type ClaimType = 'existing' | 'new_map'
+
+export interface CustomerProfile {
+  id: number
+  name: string
+  mobile: string
+  status?: CustomerStatus
+  mustChangePassword: boolean
+  rooms?: Room[]
+}
+
+export interface CustomerLoginResult {
+  token: string
+  customer: CustomerProfile
+  expiresIn: string
+}
+
+export interface CustomerRegisterPayload {
+  name: string
+  mobile: string
+  claimType: ClaimType
+  roomId?: number
+  proposedName?: string
+  proposedAddress?: string
+  lat?: number
+  lng?: number
+  placeId?: string | null
+  mapUrl?: string | null
+  note?: string
+}
+
+export interface CustomerApplication {
+  id: number
+  claimType: ClaimType
+  roomId: number | null
+  roomName: string | null
+  proposedName: string | null
+  proposedAddress: string | null
+  lat: number | null
+  lng: number | null
+  placeId: string | null
+  mapUrl: string | null
+  note: string | null
+  status: CustomerStatus
+  adminNote: string | null
+  reviewedAt: string | null
+  createdAt: string
+}
+
+export interface AdminCustomer {
+  id: number
+  name: string
+  mobile: string
+  status: CustomerStatus
+  mustChangePassword: boolean
+  createdAt: string
+  application: CustomerApplication | null
+}
+
+export interface OwnerRoomsResult {
+  mine: Room[]
+  catalog: Room[]
+}
+
+export interface CreateOwnerRoomPayload {
+  name: string
+  category: RoomCategory
+  roomType: string
+  location: string
+  description?: string
+  minMembers: number
+  maxMembers: number
+  pricePerNight: number
+  baseGuests: number
+  extraGuestPrice: number
+  amenities?: string[]
+  images: string[]
 }
 
 export interface Vehicle {
@@ -244,8 +328,63 @@ export interface StartingPrices {
   boat: number | null
 }
 
+export type AdminRole = 'super_admin' | 'admin'
+
 export interface AdminLoginResult {
   token: string
   username: string
+  role: AdminRole
   expiresIn: string
+}
+
+export interface AdminStaffUser {
+  id: number
+  username: string
+  role: AdminRole
+  isActive: boolean
+  createdAt?: string
+  createdByUsername?: string | null
+}
+
+export type GuideContact = { label: string; phone: string }
+export type GuideContactGroup = { title: string; subtitle?: string; contacts: GuideContact[] }
+export type GuidePlace = { name: string; description: string; mapUrl: string }
+export type GuidePlaceGroup = { title: string; places: GuidePlace[] }
+export type GuidePolicyHighlight = { label: string; value: string }
+export type GuidePolicyBlock = { title: string; bullets: string[] }
+
+export type GuideSection =
+  | {
+      id: string
+      type: 'contacts'
+      title: string
+      intro?: string
+      groups: GuideContactGroup[]
+    }
+  | {
+      id: string
+      type: 'places'
+      title: string
+      intro?: string
+      groups: GuidePlaceGroup[]
+    }
+  | {
+      id: string
+      type: 'policy'
+      title: string
+      intro?: string
+      highlights: GuidePolicyHighlight[]
+      blocks: GuidePolicyBlock[]
+    }
+
+export interface GuideContent {
+  title: string
+  subtitle: string
+  sections: GuideSection[]
+  footer: {
+    thanks: string
+    phones: GuideContact[]
+    address: string
+  }
+  updatedAt?: string | null
 }

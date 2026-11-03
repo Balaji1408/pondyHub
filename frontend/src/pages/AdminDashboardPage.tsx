@@ -9,13 +9,18 @@ import {
 } from '../api/hooks'
 import {
   clearAdminSession,
+  getAdminSessionUser,
   getAdminUser,
   isAdminLoggedIn,
+  isSuperAdmin,
 } from '../auth/session'
 import type { AdminBooking, BookingType, PriceKind } from '../types'
 import { ElegantPieChart } from '../components/ElegantPieChart'
 import { AdminPricingPanel } from '../components/AdminPricingPanel'
 import { AdminRoomPhotosPanel } from '../components/AdminRoomPhotosPanel'
+import { AdminOwnersPanel } from '../components/AdminOwnersPanel'
+import { AdminUsersPanel } from '../components/AdminUsersPanel'
+import { AdminGuidePanel } from '../components/AdminGuidePanel'
 import { AdminBookingModal, BookingStatusActions } from '../components/AdminBookingModal'
 import {
   formatDate,
@@ -28,10 +33,11 @@ import {
 
 type Filter = 'all' | BookingType
 type Theme = 'dark' | 'light'
-type Tab = 'bookings' | PriceKind | 'photos'
+type Tab = 'bookings' | PriceKind | 'photos' | 'owners' | 'admins' | 'guide'
 
-const TABS: { id: Tab; label: string }[] = [
+const BASE_TABS: { id: Tab; label: string }[] = [
   { id: 'bookings', label: 'Bookings' },
+  { id: 'owners', label: 'Owners' },
   { id: 'rooms', label: 'Rooms' },
   { id: 'photos', label: 'Room photos' },
   { id: 'vehicles', label: 'Vehicles' },
@@ -174,6 +180,7 @@ export function AdminDashboardPage() {
   const [page, setPage] = useState(1)
   const [toast, setToast] = useState<string | null>(null)
   const [tab, setTab] = useState<Tab>('bookings')
+  const [menuOpen, setMenuOpen] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const closeDetails = useCallback(() => setSelectedId(null), [])
   const [theme, setTheme] = useState<Theme>(() => {
@@ -185,6 +192,17 @@ export function AdminDashboardPage() {
     }
   })
   const loggedIn = isAdminLoggedIn()
+  const superAdmin = isSuperAdmin()
+  const sessionUser = getAdminSessionUser()
+  const tabs = useMemo(() => {
+    if (!superAdmin) return BASE_TABS
+    return [
+      ...BASE_TABS.slice(0, 2),
+      { id: 'admins' as Tab, label: 'Admins' },
+      { id: 'guide' as Tab, label: 'Guide' },
+      ...BASE_TABS.slice(2),
+    ]
+  }, [superAdmin])
   const bookings = useAdminBookings()
   const stats = useAdminStats()
   const updateStatus = useUpdateBookingStatus()
@@ -198,6 +216,13 @@ export function AdminDashboardPage() {
       // ignore
     }
   }, [theme])
+
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? 'hidden' : ''
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [menuOpen])
 
   useEffect(() => {
     const msg = (location.state as { loginToast?: string } | null)?.loginToast
@@ -270,7 +295,7 @@ export function AdminDashboardPage() {
     return <Navigate to="/admin/login" replace />
   }
 
-  const username = getAdminUser() ?? 'admin'
+  const username = sessionUser?.username ?? getAdminUser() ?? 'admin'
   const s = stats.data
 
   function logout() {
@@ -297,8 +322,10 @@ export function AdminDashboardPage() {
 
   return (
     <div
-      className={`min-h-dvh transition-colors duration-300 ${
-        light ? 'bg-[#f6f3ed] text-[#0a0a0a]' : 'bg-[#16161c] text-[#f5f5f5]'
+      className={`elegant-scroll h-dvh overflow-x-hidden overflow-y-auto transition-colors duration-300 ${
+        light
+          ? 'bg-[#f6f3ed] text-[#0a0a0a]'
+          : 'elegant-scroll-dark bg-[#16161c] text-[#f5f5f5]'
       }`}
     >
       <header
@@ -308,18 +335,18 @@ export function AdminDashboardPage() {
             : 'border-white/[0.08] bg-[#16161c]/92'
         }`}
       >
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-5 md:h-[4.5rem] md:px-8">
-          <div className="flex items-center gap-4">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-5 md:h-[4.5rem] md:px-8">
+          <div className="flex min-w-0 items-center gap-3">
             <Link
               to="/"
-              className={`text-sm font-bold tracking-[0.16em] uppercase ${
+              className={`truncate text-sm font-bold tracking-[0.16em] uppercase ${
                 light ? 'text-[#0a0a0a]' : 'text-white'
               }`}
             >
               Pondy Tripora
             </Link>
             <span
-              className={`rounded-full px-2.5 py-1 text-[10px] font-semibold tracking-[0.12em] uppercase ${
+              className={`hidden rounded-full px-2.5 py-1 text-[10px] font-semibold tracking-[0.12em] uppercase sm:inline ${
                 light
                   ? 'bg-[#0a0a0a] text-white'
                   : 'bg-[#c8f14a]/15 text-[#c8f14a]'
@@ -329,6 +356,15 @@ export function AdminDashboardPage() {
             </span>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
+            <span
+              className={`rounded-full px-2.5 py-1 text-[10px] font-semibold tracking-[0.12em] uppercase sm:hidden ${
+                light
+                  ? 'bg-[#0a0a0a] text-white'
+                  : 'bg-[#c8f14a]/15 text-[#c8f14a]'
+              }`}
+            >
+              Admin
+            </span>
             <ThemeToggle
               theme={theme}
               onToggle={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
@@ -341,7 +377,7 @@ export function AdminDashboardPage() {
             <button
               type="button"
               onClick={logout}
-              className={`rounded-full px-4 py-2.5 text-[11px] font-bold tracking-[0.1em] uppercase transition sm:px-5 ${
+              className={`rounded-full px-3 py-2 text-[11px] font-bold tracking-[0.1em] uppercase transition sm:px-5 sm:py-2.5 ${
                 light
                   ? 'bg-[#0a0a0a] text-white hover:bg-black/85'
                   : 'bg-[#c8f14a] text-black hover:brightness-110'
@@ -349,9 +385,76 @@ export function AdminDashboardPage() {
             >
               Log out
             </button>
+            <button
+              type="button"
+              onClick={() => setMenuOpen(true)}
+              className={`flex h-10 w-10 items-center justify-center lg:hidden ${
+                light ? 'text-[#0a0a0a]' : 'text-white'
+              }`}
+              aria-label="Open admin menu"
+              aria-expanded={menuOpen}
+            >
+              <span className="flex w-6 flex-col gap-1.5">
+                <span className="block h-[2px] w-full bg-current" />
+                <span className="block h-[2px] w-full bg-current" />
+              </span>
+            </button>
           </div>
         </div>
       </header>
+
+      {menuOpen && (
+        <div
+          className={`animate-fade-in fixed inset-0 z-[60] flex flex-col ${
+            light ? 'bg-[#0a0a0a] text-white' : 'bg-[#0c0c10] text-white'
+          }`}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Admin sections"
+        >
+          <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-5">
+            <p className="font-sans text-sm font-bold tracking-[0.18em] uppercase">Pondy Tripora</p>
+            <button
+              type="button"
+              onClick={() => setMenuOpen(false)}
+              className="flex h-10 w-10 items-center justify-center"
+              aria-label="Close admin menu"
+            >
+              <span className="relative block h-5 w-5">
+                <span className="absolute top-1/2 left-0 block h-[2px] w-full -translate-y-1/2 rotate-45 bg-white" />
+                <span className="absolute top-1/2 left-0 block h-[2px] w-full -translate-y-1/2 -rotate-45 bg-white" />
+              </span>
+            </button>
+          </div>
+          <nav className="mx-auto flex w-full max-w-7xl flex-1 flex-col justify-center px-5 pb-16">
+            <p className="mb-6 text-[11px] font-semibold tracking-[0.2em] text-white/45 uppercase">
+              Admin
+            </p>
+            <ul className="space-y-1">
+              {tabs.map((t, i) => (
+                <li
+                  key={t.id}
+                  className="animate-fade-up"
+                  style={{ animationDelay: `${0.04 * i}s` }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTab(t.id)
+                      setMenuOpen(false)
+                    }}
+                    className={`block w-full text-left font-sans text-4xl font-bold tracking-tight transition hover:opacity-70 sm:text-5xl ${
+                      tab === t.id ? 'text-white' : 'text-white/55'
+                    }`}
+                  >
+                    {t.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </div>
+      )}
 
       <main className="mx-auto max-w-7xl px-5 py-8 md:px-8 md:py-10">
         <div className="animate-fade-up mb-7 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -362,7 +465,17 @@ export function AdminDashboardPage() {
                 light ? 'text-[#0a0a0a]' : 'text-white'
               }`}
             >
-              {tab === 'bookings' ? 'Bookings dashboard' : tab === 'photos' ? 'Room photos' : 'Pricing'}
+              {tab === 'bookings'
+                ? 'Bookings dashboard'
+                : tab === 'photos'
+                  ? 'Room photos'
+                  : tab === 'owners'
+                    ? 'Owners'
+                    : tab === 'admins'
+                      ? 'Admin users'
+                      : tab === 'guide'
+                        ? 'Guest guide'
+                        : 'Pricing'}
             </h1>
           </div>
           <p className={`text-sm ${light ? 'text-[#9a9288]' : 'text-[#6b6b6b]'}`}>
@@ -373,18 +486,18 @@ export function AdminDashboardPage() {
         <div
           role="tablist"
           aria-label="Admin sections"
-          className={`mb-6 inline-flex max-w-full gap-1 overflow-x-auto rounded-full p-1 ${
+          className={`mb-6 hidden max-w-full gap-1 overflow-x-auto rounded-full p-1 lg:inline-flex ${
             light ? 'border border-[#e8e4dc] bg-white' : 'bg-[#22222a]'
           }`}
         >
-          {TABS.map((t) => (
+          {tabs.map((t) => (
             <button
               key={t.id}
               type="button"
               role="tab"
               aria-selected={tab === t.id}
               onClick={() => setTab(t.id)}
-              className={`shrink-0 rounded-full px-4 py-2 text-[11px] font-semibold tracking-[0.08em] uppercase transition sm:px-5 ${
+              className={`shrink-0 cursor-pointer rounded-full px-4 py-2 text-[11px] font-semibold tracking-[0.08em] uppercase transition sm:px-5 ${
                 tab === t.id
                   ? light
                     ? 'bg-[#0a0a0a] text-white'
@@ -401,6 +514,12 @@ export function AdminDashboardPage() {
 
         {tab === 'photos' ? (
           <AdminRoomPhotosPanel light={light} accent={accents.lime} onSaved={setToast} />
+        ) : tab === 'owners' ? (
+          <AdminOwnersPanel light={light} accent={accents.lime} onSaved={setToast} />
+        ) : tab === 'admins' ? (
+          <AdminUsersPanel light={light} accent={accents.lime} onSaved={setToast} />
+        ) : tab === 'guide' ? (
+          <AdminGuidePanel light={light} accent={accents.lime} onSaved={setToast} />
         ) : tab !== 'bookings' ? (
           <AdminPricingPanel
             kind={tab}

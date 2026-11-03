@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { useAdminCatalog, useUpdateItemPrice } from '../api/hooks'
+import { useEffect, useMemo, useState } from 'react'
+import { useAdminCatalog, useDeleteRoom, useUpdateItemPrice } from '../api/hooks'
 import type { AdminPriceItem, PriceFields, PriceKind } from '../types'
 
 type FieldKey = keyof PriceFields
@@ -48,11 +48,23 @@ export function AdminPricingPanel({
 }) {
   const catalog = useAdminCatalog()
   const updatePrice = useUpdateItemPrice()
+  const deleteRoom = useDeleteRoom()
   const [drafts, setDrafts] = useState<Record<string, string>>({})
   const [query, setQuery] = useState('')
   const [savingId, setSavingId] = useState<number | null>(null)
+  const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<AdminPriceItem | null>(null)
   const [error, setError] = useState<string | null>(null)
   const { title, fields } = COPY[kind]
+
+  useEffect(() => {
+    if (!deleteTarget) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setDeleteTarget(null)
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [deleteTarget])
 
   const items = useMemo(() => {
     const list = catalog.data?.[kind] ?? []
@@ -102,9 +114,32 @@ export function AdminPricingPanel({
     }
   }
 
+  async function confirmDelete() {
+    if (!deleteTarget || kind !== 'rooms') return
+    const item = deleteTarget
+    setError(null)
+    setDeletingId(item.id)
+    try {
+      const result = await deleteRoom.mutateAsync(item.id)
+      setDrafts((d) => {
+        const next = { ...d }
+        for (const f of fields) delete next[draftKey(item.id, f.key)]
+        return next
+      })
+      onSaved(result.message || `${item.name} deleted`)
+      setDeleteTarget(null)
+    } catch (err) {
+      setError((err as Error).message)
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
   const muted = light ? 'text-[#9a9288]' : 'text-[#6b6b6b]'
+  const busy = savingId !== null || deletingId !== null
 
   return (
+    <>
     <section
       className={`overflow-hidden rounded-[28px] transition-colors ${
         light
@@ -239,15 +274,25 @@ export function AdminPricingPanel({
                     })}
                     <button
                       type="button"
-                      disabled={!changed || saving}
+                      disabled={!changed || busy}
                       onClick={() => void save(item)}
-                      className={`rounded-full px-4 py-2 text-[11px] font-bold tracking-[0.1em] uppercase transition disabled:cursor-not-allowed disabled:opacity-30 ${
+                      className={`cursor-pointer rounded-full px-4 py-2 text-[11px] font-bold tracking-[0.1em] uppercase transition disabled:cursor-not-allowed disabled:opacity-30 ${
                         light ? 'bg-[#0a0a0a] text-white hover:bg-black/85' : 'text-black hover:brightness-110'
                       }`}
                       style={light ? undefined : { background: accent }}
                     >
                       {saving ? 'Saving…' : 'Save'}
                     </button>
+                    {kind === 'rooms' && (
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => setDeleteTarget(item)}
+                        className="cursor-pointer rounded-full border border-red-500/40 px-4 py-2 text-[11px] font-semibold tracking-[0.1em] text-red-500 uppercase disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        Delete
+                      </button>
+                    )}
                   </div>
                 </li>
               )
@@ -256,5 +301,58 @@ export function AdminPricingPanel({
         )}
       </div>
     </section>
+
+    {kind === 'rooms' && deleteTarget && (
+      <div
+        className="fixed inset-0 z-[80] flex items-center justify-center bg-black/55 px-4"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="delete-room-title"
+        onClick={() => setDeleteTarget(null)}
+      >
+        <div
+          className={`w-full max-w-md rounded-[24px] p-6 shadow-2xl ${
+            light ? 'bg-white text-[#0a0a0a]' : 'bg-[#22222a] text-white'
+          }`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <p
+            className={`text-[12px] font-medium tracking-[0.12em] uppercase ${
+              light ? 'text-[#8a847a]' : 'text-[#7a7a7a]'
+            }`}
+          >
+            Confirm delete
+          </p>
+          <h3 id="delete-room-title" className="mt-2 text-xl font-semibold tracking-tight">
+            Delete {deleteTarget.name}?
+          </h3>
+          <p className={`mt-2 text-sm ${light ? 'text-[#6b6560]' : 'text-[#a3a3a3]'}`}>
+            This permanently removes the room from the public website. Past bookings stay in
+            records, but the listing and its photos will be gone. This cannot be undone.
+          </p>
+          <div className="mt-6 flex flex-wrap justify-end gap-2">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => setDeleteTarget(null)}
+              className={`cursor-pointer rounded-full border px-4 py-2 text-[11px] font-semibold tracking-[0.1em] uppercase ${
+                light ? 'border-[#e8e4dc] text-[#3d3d3d]' : 'border-white/10 text-[#c5c5c5]'
+              }`}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void confirmDelete()}
+              className="cursor-pointer rounded-full bg-red-500 px-4 py-2 text-[11px] font-bold tracking-[0.1em] text-white uppercase disabled:opacity-50"
+            >
+              {deletingId === deleteTarget.id ? 'Deleting…' : 'Delete room'}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   )
 }

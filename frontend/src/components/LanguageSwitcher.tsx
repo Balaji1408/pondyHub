@@ -50,15 +50,7 @@ export function LanguageSwitcher({
           size === 'md' ? 'text-[14px]' : 'text-[12px]'
         } ${compact ? 'px-1 py-1' : 'px-2 py-1.5'}`}
       >
-        <span
-          className={`font-sans font-semibold tracking-normal opacity-90 ${
-            size === 'md' ? 'text-[12px]' : 'text-[10px]'
-          }`}
-          aria-hidden
-        >
-          Aa
-        </span>
-        <span className="uppercase">{LOCALE_SHORT[locale]}</span>
+        <span className="uppercase">Lang</span>
         <span className="text-[9px] opacity-60" aria-hidden>
           ▾
         </span>

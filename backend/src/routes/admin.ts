@@ -1,43 +1,184 @@
 import { Router } from 'express';
-import { timingSafeEqual } from 'crypto';
-import { createAdminToken, getAdminCredentials, requireAdmin } from '../auth.js';
+import type { ResultSetHeader, RowDataPacket } from 'mysql2';
+import {
+  createAdminToken,
+  requireAdmin,
+  requireSuperAdmin,
+  type AdminRequest,
+} from '../auth.js';
 import { pool } from '../db.js';
-import { parseJson } from '../mappers.js';
+import { mapRoom, parseJson } from '../mappers.js';
 import { deleteUpload, saveDataUrlImage, UploadError } from '../uploads.js';
+import { getCustomerDefaultPassword, hashPassword, verifyPassword } from '../password.js';
+import { DEFAULT_GUIDE, type GuideContent } from '../guideDefault.js';
+import { loadGuide } from './guide.js';
 
 const router = Router();
 
-function safeEqual(a: string, b: string) {
-  const bufA = Buffer.from(a);
-  const bufB = Buffer.from(b);
-  if (bufA.length !== bufB.length) return false;
-  return timingSafeEqual(bufA, bufB);
-}
+router.post('/login', async (req, res) => {
+  try {
+    const username = typeof req.body?.username === 'string' ? req.body.username.trim() : '';
+    const password = typeof req.body?.password === 'string' ? req.body.password : '';
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password are required' });
+    }
 
-router.post('/login', (req, res) => {
-  const { username, password } = req.body ?? {};
-  const creds = getAdminCredentials();
+    const [rows] = await pool.query<RowDataPacket[]>(
+      `SELECT id, username, password_hash, role, is_active
+       FROM users WHERE username = :username LIMIT 1`,
+      { username }
+    );
+    const user = rows[0];
+    if (!user || !user.is_active) {
+      return res.status(401).json({ error: 'Invalid username or password' });
+    }
+    const ok = await verifyPassword(password, String(user.password_hash));
+    if (!ok) return res.status(401).json({ error: 'Invalid username or password' });
 
-  if (
-    typeof username !== 'string' ||
-    typeof password !== 'string' ||
-    !safeEqual(username, creds.username) ||
-    !safeEqual(password, creds.password)
-  ) {
-    return res.status(401).json({ error: 'Invalid username or password' });
+    const role = user.role === 'super_admin' ? 'super_admin' : 'admin';
+    const token = createAdminToken({
+      id: Number(user.id),
+      username: String(user.username),
+      role,
+    });
+    res.json({
+      token,
+      username: String(user.username),
+      role,
+      expiresIn: '12h',
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Login failed' });
   }
-
-  const token = createAdminToken(creds.username);
-  res.json({
-    token,
-    username: creds.username,
-    expiresIn: '12h',
-  });
 });
 
 router.get('/me', requireAdmin, (req, res) => {
-  const admin = (req as typeof req & { admin?: { username: string } }).admin;
-  res.json({ username: admin?.username ?? 'admin' });
+  const admin = (req as AdminRequest).admin!;
+  res.json({
+    id: admin.id,
+    username: admin.username,
+    role: admin.role,
+  });
+});
+
+router.get('/users', requireSuperAdmin, async (_req, res) => {
+  try {
+    const [rows] = await pool.query<RowDataPacket[]>(`
+      SELECT u.id, u.username, u.role, u.is_active, u.created_at,
+             c.username AS created_by_username
+      FROM users u
+      LEFT JOIN users c ON c.id = u.created_by
+      ORDER BY FIELD(u.role, 'super_admin', 'admin'), u.username
+    `);
+    res.json(
+      rows.map((r) => ({
+        id: Number(r.id),
+        username: String(r.username),
+        role: r.role,
+        isActive: Boolean(r.is_active),
+        createdAt: r.created_at,
+        createdByUsername: r.created_by_username ?? null,
+      }))
+    );
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to load users' });
+  }
+});
+
+router.post('/users', requireSuperAdmin, async (req, res) => {
+  try {
+    const admin = (req as AdminRequest).admin!;
+    const username = typeof req.body?.username === 'string' ? req.body.username.trim() : '';
+    const password = typeof req.body?.password === 'string' ? req.body.password : '';
+    if (!username || username.length < 3) {
+      return res.status(400).json({ error: 'Username must be at least 3 characters' });
+    }
+    if (!/^[a-zA-Z0-9._-]+$/.test(username)) {
+      return res.status(400).json({ error: 'Username may only use letters, numbers, . _ -' });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+
+    const [existing] = await pool.query<RowDataPacket[]>(
+      `SELECT id FROM users WHERE username = :username LIMIT 1`,
+      { username }
+    );
+    if (existing.length) {
+      return res.status(409).json({ error: 'That username is already taken' });
+    }
+
+    const passwordHash = await hashPassword(password);
+    const [result] = await pool.query<ResultSetHeader>(
+      `INSERT INTO users (username, password_hash, role, is_active, created_by)
+       VALUES (:username, :passwordHash, 'admin', 1, :createdBy)`,
+      { username, passwordHash, createdBy: admin.id || null }
+    );
+    res.status(201).json({
+      id: result.insertId,
+      username,
+      role: 'admin',
+      isActive: true,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to create admin user' });
+  }
+});
+
+router.patch('/users/:id', requireSuperAdmin, async (req, res) => {
+  try {
+    const admin = (req as AdminRequest).admin!;
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ error: 'Invalid user id' });
+
+    const [rows] = await pool.query<RowDataPacket[]>(
+      `SELECT id, username, role, is_active FROM users WHERE id = :id LIMIT 1`,
+      { id }
+    );
+    if (!rows.length) return res.status(404).json({ error: 'User not found' });
+    const target = rows[0];
+
+    if (Number(target.id) === admin.id) {
+      return res.status(400).json({ error: 'You cannot change your own account here' });
+    }
+    if (target.role === 'super_admin') {
+      return res.status(400).json({ error: 'Super admin accounts cannot be modified here' });
+    }
+
+    const fields: string[] = [];
+    const params: Record<string, string | number> = { id };
+
+    if (typeof req.body?.isActive === 'boolean') {
+      fields.push('is_active = :isActive');
+      params.isActive = req.body.isActive ? 1 : 0;
+    }
+    if (typeof req.body?.password === 'string' && req.body.password.length >= 6) {
+      fields.push('password_hash = :passwordHash');
+      params.passwordHash = await hashPassword(req.body.password);
+    }
+
+    if (!fields.length) {
+      return res.status(400).json({ error: 'Provide isActive and/or a new password' });
+    }
+
+    await pool.query(`UPDATE users SET ${fields.join(', ')} WHERE id = :id`, params);
+    const [updated] = await pool.query<RowDataPacket[]>(
+      `SELECT id, username, role, is_active FROM users WHERE id = :id`,
+      { id }
+    );
+    res.json({
+      id: Number(updated[0].id),
+      username: String(updated[0].username),
+      role: updated[0].role,
+      isActive: Boolean(updated[0].is_active),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update user' });
+  }
 });
 
 function capitalize(value: unknown) {
@@ -387,6 +528,343 @@ router.delete('/rooms/:id/gallery/:slot', requireAdmin, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to reset photo' });
+  }
+});
+
+router.delete('/rooms/:id', requireAdmin, async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ error: 'Invalid room id' });
+
+    const [rows] = await pool.query<RowDataPacket[]>(
+      `SELECT id, name, images, room_gallery FROM rooms WHERE id = :id LIMIT 1`,
+      { id }
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Room not found' });
+
+    const room = rows[0];
+    await pool.query(`DELETE FROM rooms WHERE id = :id`, { id });
+
+    const gallery =
+      parseJson(room.room_gallery, {} as Partial<Record<GallerySlot, string>>) ?? {};
+    const images = parseJson(room.images, [] as string[]) ?? [];
+    await Promise.all([
+      ...Object.values(gallery).map((url) => deleteUpload(url)),
+      ...images.map((url) => deleteUpload(url)),
+    ]);
+
+    res.json({
+      id,
+      deleted: true,
+      message: `${room.name} was deleted`,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to delete room' });
+  }
+});
+
+router.get('/customers', requireAdmin, async (req, res) => {
+  try {
+    const rawQ = typeof req.query.q === 'string' ? req.query.q.trim() : ''
+    // Cap length and strip LIKE wildcards — keep the filter parameterized and cheap.
+    const q = rawQ.slice(0, 80).replace(/[%_\\]/g, '')
+    const like = q ? `%${q}%` : null
+
+    const [countRows] = await pool.query<RowDataPacket[]>(`
+      SELECT status, COUNT(*) AS n
+      FROM customers
+      GROUP BY status
+    `)
+    const counts = { pending: 0, approved: 0, rejected: 0, total: 0 }
+    for (const row of countRows) {
+      const status = String(row.status) as keyof typeof counts
+      const n = Number(row.n) || 0
+      if (status in counts && status !== 'total') counts[status] = n
+      counts.total += n
+    }
+
+    const [rows] = await pool.query<RowDataPacket[]>(
+      `
+      SELECT
+        c.id, c.name, c.mobile, c.status, c.must_change_password, c.created_at,
+        a.id AS application_id, a.claim_type, a.room_id, a.proposed_name, a.proposed_address,
+        a.lat, a.lng, a.place_id, a.map_url, a.note, a.status AS application_status,
+        a.admin_note, a.reviewed_at, a.created_at AS application_created_at,
+        r.name AS room_name
+      FROM customers c
+      LEFT JOIN customer_applications a ON a.id = (
+        SELECT id FROM customer_applications WHERE customer_id = c.id ORDER BY id DESC LIMIT 1
+      )
+      LEFT JOIN rooms r ON r.id = a.room_id
+      WHERE (
+        :hasQ = 0
+        OR c.name LIKE :like
+        OR c.mobile LIKE :like
+        OR c.status LIKE :like
+        OR IFNULL(a.proposed_name, '') LIKE :like
+        OR IFNULL(a.proposed_address, '') LIKE :like
+        OR IFNULL(r.name, '') LIKE :like
+      )
+      ORDER BY
+        FIELD(c.status, 'pending', 'approved', 'rejected'),
+        c.created_at DESC
+      LIMIT 200
+    `,
+      { hasQ: like ? 1 : 0, like: like ?? '%' }
+    )
+
+    res.json({
+      counts,
+      items: rows.map((row) => ({
+        id: Number(row.id),
+        name: String(row.name),
+        mobile: String(row.mobile),
+        status: row.status,
+        mustChangePassword: Boolean(row.must_change_password),
+        createdAt: row.created_at,
+        application: row.application_id
+          ? {
+              id: Number(row.application_id),
+              claimType: row.claim_type,
+              roomId: row.room_id == null ? null : Number(row.room_id),
+              roomName: row.room_name ?? null,
+              proposedName: row.proposed_name,
+              proposedAddress: row.proposed_address,
+              lat: row.lat == null ? null : Number(row.lat),
+              lng: row.lng == null ? null : Number(row.lng),
+              placeId: row.place_id,
+              mapUrl: row.map_url,
+              note: row.note,
+              status: row.application_status,
+              adminNote: row.admin_note,
+              reviewedAt: row.reviewed_at,
+              createdAt: row.application_created_at,
+            }
+          : null,
+      })),
+    })
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to load owners' });
+  }
+});
+
+router.patch('/customers/:id/status', requireAdmin, async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const status = req.body?.status;
+    const adminNote =
+      typeof req.body?.adminNote === 'string' ? req.body.adminNote.trim().slice(0, 500) : null;
+    if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ error: 'Invalid owner id' });
+    if (status !== 'approved' && status !== 'rejected') {
+      return res.status(400).json({ error: 'Status must be approved or rejected' });
+    }
+
+    const [rows] = await pool.query<RowDataPacket[]>(
+      `SELECT id, status FROM customers WHERE id = :id LIMIT 1`,
+      { id }
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Owner not found' });
+
+    if (status === 'approved') {
+      const passwordHash = await hashPassword(getCustomerDefaultPassword());
+      await pool.query(
+        `UPDATE customers
+         SET status = 'approved', password_hash = :passwordHash, must_change_password = 1
+         WHERE id = :id`,
+        { id, passwordHash }
+      );
+
+      // If they claimed an existing room, link ownership and hold for room re-approval.
+      const [apps] = await pool.query<RowDataPacket[]>(
+        `SELECT room_id, claim_type FROM customer_applications
+         WHERE customer_id = :id ORDER BY id DESC LIMIT 1`,
+        { id }
+      );
+      if (apps[0]?.claim_type === 'existing' && apps[0].room_id) {
+        await pool.query(
+          `UPDATE rooms SET owner_customer_id = :id WHERE id = :roomId AND owner_customer_id IS NULL`,
+          { id, roomId: Number(apps[0].room_id) }
+        );
+      }
+    } else {
+      await pool.query(`UPDATE customers SET status = 'rejected' WHERE id = :id`, { id });
+    }
+
+    await pool.query(
+      `UPDATE customer_applications
+       SET status = :status, admin_note = :adminNote, reviewed_at = CURRENT_TIMESTAMP
+       WHERE customer_id = :id AND status = 'pending'`,
+      { id, status, adminNote }
+    );
+
+    res.json({
+      id,
+      status,
+      defaultPasswordHint: status === 'approved' ? 'Owner can sign in with the default password' : null,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update owner status' });
+  }
+});
+
+router.post('/customers/:id/reset-password', requireAdmin, async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ error: 'Invalid owner id' });
+    const [rows] = await pool.query<RowDataPacket[]>(
+      `SELECT id, status FROM customers WHERE id = :id LIMIT 1`,
+      { id }
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Owner not found' });
+    if (rows[0].status !== 'approved') {
+      return res.status(400).json({ error: 'Only approved owners can have a password reset' });
+    }
+
+    const passwordHash = await hashPassword(getCustomerDefaultPassword());
+    await pool.query(
+      `UPDATE customers
+       SET password_hash = :passwordHash, must_change_password = 1
+       WHERE id = :id`,
+      { id, passwordHash }
+    );
+    res.json({
+      id,
+      mustChangePassword: true,
+      message: 'Password reset to the default. The owner must set a new password on next login.',
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to reset password' });
+  }
+});
+
+router.delete('/customers/:id', requireAdmin, async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ error: 'Invalid owner id' });
+
+    const [rows] = await pool.query<RowDataPacket[]>(
+      `SELECT id, name, status FROM customers WHERE id = :id LIMIT 1`,
+      { id }
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Owner not found' });
+    if (rows[0].status !== 'approved') {
+      return res.status(400).json({ error: 'Only approved owners can be deleted from this action' });
+    }
+
+    // Unlink rooms first (keeps listings; removes ownership).
+    await pool.query(`UPDATE rooms SET owner_customer_id = NULL WHERE owner_customer_id = :id`, {
+      id,
+    });
+    await pool.query(`DELETE FROM customers WHERE id = :id`, { id });
+
+    res.json({
+      id,
+      deleted: true,
+      message: `${rows[0].name} was deleted`,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to delete owner' });
+  }
+});
+
+router.get('/rooms/pending', requireAdmin, async (_req, res) => {
+  try {
+    const [rows] = await pool.query<RowDataPacket[]>(`
+      SELECT r.*, c.name AS owner_name, c.mobile AS owner_mobile
+      FROM rooms r
+      LEFT JOIN customers c ON c.id = r.owner_customer_id
+      WHERE r.listing_status = 'pending'
+      ORDER BY r.id DESC
+    `);
+    res.json(
+      (rows as Record<string, unknown>[]).map((row) => ({
+        ...mapRoom(row),
+        ownerName: row.owner_name ?? null,
+        ownerMobile: row.owner_mobile ?? null,
+      }))
+    );
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to load pending rooms' });
+  }
+});
+
+router.patch('/rooms/:id/listing-status', requireAdmin, async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const status = req.body?.status;
+    if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ error: 'Invalid room id' });
+    if (status !== 'published' && status !== 'rejected' && status !== 'pending') {
+      return res.status(400).json({ error: 'Invalid listing status' });
+    }
+    const [rows] = await pool.query<RowDataPacket[]>(`SELECT id FROM rooms WHERE id = :id`, { id });
+    if (!rows.length) return res.status(404).json({ error: 'Room not found' });
+    await pool.query(`UPDATE rooms SET listing_status = :status WHERE id = :id`, { id, status });
+    const [updated] = await pool.query<RowDataPacket[]>(`SELECT * FROM rooms WHERE id = :id`, { id });
+    res.json(mapRoom(updated[0] as Record<string, unknown>));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update listing status' });
+  }
+});
+
+router.get('/guide', requireAdmin, async (_req, res) => {
+  try {
+    res.json(await loadGuide());
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to load guide' });
+  }
+});
+
+router.put('/guide', requireSuperAdmin, async (req, res) => {
+  try {
+    const body = req.body as Partial<GuideContent> | null;
+    const title = typeof body?.title === 'string' ? body.title.trim() : '';
+    const subtitle = typeof body?.subtitle === 'string' ? body.subtitle.trim() : '';
+    if (!title) return res.status(400).json({ error: 'Title is required' });
+    if (!Array.isArray(body?.sections)) {
+      return res.status(400).json({ error: 'Sections are required' });
+    }
+
+    const content: GuideContent = {
+      title,
+      subtitle,
+      sections: body.sections,
+      footer: {
+        thanks:
+          typeof body.footer?.thanks === 'string' && body.footer.thanks.trim()
+            ? body.footer.thanks.trim()
+            : DEFAULT_GUIDE.footer.thanks,
+        phones: Array.isArray(body.footer?.phones) ? body.footer.phones : DEFAULT_GUIDE.footer.phones,
+        address:
+          typeof body.footer?.address === 'string' ? body.footer.address.trim() : DEFAULT_GUIDE.footer.address,
+      },
+    };
+
+    await pool.query(
+      `INSERT INTO guide (id, title, subtitle, content)
+       VALUES (1, :title, :subtitle, :content)
+       ON DUPLICATE KEY UPDATE
+         title = VALUES(title),
+         subtitle = VALUES(subtitle),
+         content = VALUES(content)`,
+      {
+        title: content.title,
+        subtitle: content.subtitle,
+        content: JSON.stringify(content),
+      }
+    );
+
+    res.json(await loadGuide());
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to save guide' });
   }
 });
 

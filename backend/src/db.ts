@@ -1,6 +1,7 @@
 import mysql from 'mysql2/promise';
 import dotenv from 'dotenv';
 import { parseJson } from './mappers.js';
+import { hashPassword } from './password.js';
 
 dotenv.config();
 
@@ -36,8 +37,13 @@ async function tableExists(table: string) {
 }
 
 async function ensureRoomColumns() {
-  const existing = await existingColumns('rooms', ['base_guests', 'extra_guest_price', 'room_gallery']);
-  if (existing.size === 3) return;
+  const existing = await existingColumns('rooms', [
+    'base_guests',
+    'extra_guest_price',
+    'room_gallery',
+    'owner_customer_id',
+    'listing_status',
+  ]);
 
   if (!existing.has('room_gallery')) {
     await pool.query(`ALTER TABLE rooms ADD COLUMN room_gallery JSON NULL AFTER images`);
@@ -57,6 +63,57 @@ async function ensureRoomColumns() {
     await pool.query(
       `UPDATE rooms SET extra_guest_price = ROUND(price_per_night * 0.2 / 50) * 50`
     );
+  }
+  if (!existing.has('listing_status')) {
+    await pool.query(
+      `ALTER TABLE rooms ADD COLUMN listing_status ENUM('published','pending','rejected') NOT NULL DEFAULT 'published' AFTER rating`
+    );
+  }
+  if (!existing.has('owner_customer_id')) {
+    await pool.query(
+      `ALTER TABLE rooms ADD COLUMN owner_customer_id INT NULL AFTER listing_status`
+    );
+  }
+}
+
+async function ensureCustomerSchema() {
+  if (!(await tableExists('customers'))) {
+    await pool.query(`
+      CREATE TABLE customers (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(120) NOT NULL,
+        mobile VARCHAR(10) NOT NULL,
+        password_hash VARCHAR(200) NULL,
+        status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+        must_change_password TINYINT(1) NOT NULL DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY uq_customers_mobile (mobile)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+  }
+
+  if (!(await tableExists('customer_applications'))) {
+    await pool.query(`
+      CREATE TABLE customer_applications (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        customer_id INT NOT NULL,
+        claim_type ENUM('existing','new_map') NOT NULL,
+        room_id INT NULL,
+        proposed_name VARCHAR(150) NULL,
+        proposed_address VARCHAR(300) NULL,
+        lat DECIMAL(10, 7) NULL,
+        lng DECIMAL(10, 7) NULL,
+        place_id VARCHAR(200) NULL,
+        map_url VARCHAR(500) NULL,
+        note TEXT NULL,
+        status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+        admin_note TEXT NULL,
+        reviewed_at TIMESTAMP NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_apps_customer (customer_id),
+        CONSTRAINT fk_apps_customer FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
+        CONSTRAINT fk_apps_room FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE SET NULL
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
   }
 }
 
@@ -182,10 +239,74 @@ async function ensureBoatSchema() {
   if (add.length) await pool.query(`ALTER TABLE bookings ${add.join(', ')}`);
 }
 
+async function ensureUsersSchema() {
+  if (!(await tableExists('users'))) {
+    await pool.query(`
+      CREATE TABLE users (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(80) NOT NULL,
+        password_hash VARCHAR(200) NOT NULL,
+        role ENUM('super_admin','admin') NOT NULL DEFAULT 'admin',
+        is_active TINYINT(1) NOT NULL DEFAULT 1,
+        created_by INT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY uq_users_username (username),
+        INDEX idx_users_role (role)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+  }
+
+  const [rows] = await pool.query(`SELECT COUNT(*) AS c FROM users`);
+  const count = Number((rows as { c: number }[])[0]?.c ?? 0);
+  if (count > 0) return;
+
+  // First boot: seed the super admin from env (replaces the old static login).
+  const username = (process.env.ADMIN_USER || 'admin').trim() || 'admin';
+  const password = process.env.ADMIN_PASSWORD || 'pondyhub';
+  const passwordHash = await hashPassword(password);
+  await pool.query(
+    `INSERT INTO users (username, password_hash, role, is_active)
+     VALUES (:username, :passwordHash, 'super_admin', 1)`,
+    { username, passwordHash }
+  );
+  console.log(`Seeded super admin user "${username}" in users table`);
+}
+
+async function ensureGuideSchema() {
+  if (!(await tableExists('guide'))) {
+    await pool.query(`
+      CREATE TABLE guide (
+        id TINYINT PRIMARY KEY DEFAULT 1,
+        title VARCHAR(200) NOT NULL,
+        subtitle TEXT NULL,
+        content JSON NOT NULL,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+  }
+
+  const [rows] = await pool.query(`SELECT id FROM guide WHERE id = 1 LIMIT 1`);
+  if ((rows as unknown[]).length > 0) return;
+
+  const { DEFAULT_GUIDE } = await import('./guideDefault.js');
+  await pool.query(
+    `INSERT INTO guide (id, title, subtitle, content)
+     VALUES (1, :title, :subtitle, :content)`,
+    {
+      title: DEFAULT_GUIDE.title,
+      subtitle: DEFAULT_GUIDE.subtitle,
+      content: JSON.stringify(DEFAULT_GUIDE),
+    }
+  );
+  console.log('Seeded default guest guide');
+}
+
 /** Adds columns and tables to existing databases that were imported before they existed. */
 export async function ensureSchema() {
   await ensureRoomColumns();
   await ensureBoatSchema();
+  await ensureCustomerSchema();
+  await ensureUsersSchema();
+  await ensureGuideSchema();
 }
 
 export async function pingDb() {
