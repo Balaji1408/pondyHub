@@ -11,7 +11,7 @@ const linkDefs = [
   { to: '/cafes', key: 'nav.cafes' },
   { to: '/beaches', key: 'nav.beaches' },
   { to: '/temples', key: 'nav.temples' },
-  { to: '/guide', key: 'nav.guide' },
+  // Guide stays at /guide for admins; hidden from public nav for now.
   { to: '/bars', key: 'nav.bars' },
   { to: '/food-street', key: 'nav.foodStreet' },
   { to: '/white-town', key: 'nav.whiteTown' },

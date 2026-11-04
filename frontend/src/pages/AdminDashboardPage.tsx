@@ -37,7 +37,7 @@ type Tab = 'bookings' | PriceKind | 'photos' | 'owners' | 'admins' | 'guide'
 
 const BASE_TABS: { id: Tab; label: string }[] = [
   { id: 'bookings', label: 'Bookings' },
-  { id: 'owners', label: 'Owners' },
+  { id: 'owners', label: 'Members' },
   { id: 'rooms', label: 'Rooms' },
   { id: 'photos', label: 'Room photos' },
   { id: 'vehicles', label: 'Vehicles' },
@@ -470,7 +470,7 @@ export function AdminDashboardPage() {
                 : tab === 'photos'
                   ? 'Room photos'
                   : tab === 'owners'
-                    ? 'Owners'
+                    ? 'Members'
                     : tab === 'admins'
                       ? 'Admin users'
                       : tab === 'guide'

@@ -187,7 +187,7 @@ export function AdminOwnersPanel({
               <p className={`text-[12px] font-medium ${light ? 'text-[#8a847a]' : 'text-[#7a7a7a]'}`}>
                 Approvals
               </p>
-              <h2 className={`mt-1 text-xl font-semibold tracking-tight ${strong}`}>Room owners</h2>
+              <h2 className={`mt-1 text-xl font-semibold tracking-tight ${strong}`}>Members</h2>
               <p className={`mt-1.5 text-sm leading-relaxed ${muted}`}>
                 Accept registrations, then share that they sign in with their mobile and default
                 password <span className={strong}>Pondy@123</span>. Reset forces a new password on
