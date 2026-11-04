@@ -206,6 +206,7 @@ export function useAdminCustomers(search = '') {
     queryFn: () => api.adminCustomers(q || undefined),
     enabled: isAdminLoggedIn(),
     placeholderData: (prev) => prev,
+    refetchOnMount: 'always',
   })
 }
 

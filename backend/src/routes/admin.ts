@@ -584,6 +584,7 @@ router.get('/customers', requireAdmin, async (req, res) => {
       counts.total += n
     }
 
+    // TiDB-friendly: avoid FIELD() and correlated ORDER BY … LIMIT joins.
     const [rows] = await pool.query<RowDataPacket[]>(
       `
       SELECT
@@ -593,9 +594,12 @@ router.get('/customers', requireAdmin, async (req, res) => {
         a.admin_note, a.reviewed_at, a.created_at AS application_created_at,
         r.name AS room_name
       FROM customers c
-      LEFT JOIN customer_applications a ON a.id = (
-        SELECT id FROM customer_applications WHERE customer_id = c.id ORDER BY id DESC LIMIT 1
-      )
+      LEFT JOIN (
+        SELECT customer_id, MAX(id) AS max_id
+        FROM customer_applications
+        GROUP BY customer_id
+      ) latest ON latest.customer_id = c.id
+      LEFT JOIN customer_applications a ON a.id = latest.max_id
       LEFT JOIN rooms r ON r.id = a.room_id
       WHERE (
         :hasQ = 0
@@ -607,7 +611,12 @@ router.get('/customers', requireAdmin, async (req, res) => {
         OR IFNULL(r.name, '') LIKE :like
       )
       ORDER BY
-        FIELD(c.status, 'pending', 'approved', 'rejected'),
+        CASE c.status
+          WHEN 'pending' THEN 0
+          WHEN 'approved' THEN 1
+          WHEN 'rejected' THEN 2
+          ELSE 3
+        END,
         c.created_at DESC
       LIMIT 200
     `,

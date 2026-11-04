@@ -69,6 +69,12 @@ export function AdminOwnersPanel({
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const customers = useAdminCustomers(debouncedSearch)
+  const loadError =
+    customers.isError && customers.error instanceof Error
+      ? customers.error.message
+      : customers.isError
+        ? 'Failed to load members'
+        : null
   const pendingRooms = useAdminPendingRooms()
   const updateStatus = useUpdateCustomerStatus()
   const resetPassword = useResetCustomerPassword()
@@ -278,27 +284,36 @@ export function AdminOwnersPanel({
                 className={`inline-block h-6 w-6 animate-spin rounded-full border-2 border-current border-r-transparent ${muted}`}
                 aria-hidden
               />
-              <p className={`text-sm ${muted}`}>Loading owners…</p>
+              <p className={`text-sm ${muted}`}>Loading members…</p>
             </div>
           )}
-          {error && (
+          {(error || loadError) && (
             <div className="mb-4 rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-600">
-              {error}
+              {error || loadError}
+              {loadError && (
+                <button
+                  type="button"
+                  onClick={() => void customers.refetch()}
+                  className="ml-3 font-semibold underline underline-offset-2"
+                >
+                  Retry
+                </button>
+              )}
             </div>
           )}
-          {!customers.isLoading && ownerList.length === 0 && (
+          {!customers.isLoading && !loadError && ownerList.length === 0 && (
             <div
               className={`rounded-[22px] px-6 py-12 text-center ${
                 light ? 'bg-[#faf8f4]' : 'bg-[#1a1a22]'
               }`}
             >
               <p className={`text-sm font-medium ${strong}`}>
-                {debouncedSearch ? 'No owners match that search' : 'No owner registrations yet'}
+                {debouncedSearch ? 'No members match that search' : 'No member registrations yet'}
               </p>
               <p className={`mt-1 text-sm ${muted}`}>
                 {debouncedSearch
                   ? 'Try another name, mobile number, or stay.'
-                  : 'New hosts appear here when they register from the owner portal.'}
+                  : 'New hosts appear here when they register from Members.'}
               </p>
             </div>
           )}
