@@ -136,7 +136,7 @@ function ThemeToggle({
       onClick={onToggle}
       aria-label={light ? 'Switch to dark mode' : 'Switch to light mode'}
       title={light ? 'Dark mode' : 'Light mode'}
-      className={`inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-[11px] font-semibold tracking-[0.08em] uppercase transition ${
+      className={`inline-flex h-10 items-center justify-center gap-2 rounded-full px-2.5 text-[11px] font-semibold tracking-[0.08em] uppercase transition lg:px-3.5 ${
         light
           ? 'border border-[#e0d9ce] bg-white text-[#0a0a0a] hover:bg-[#f6f3ed]'
           : 'border border-white/10 bg-white/[0.06] text-[#d4d4d4] hover:bg-white/[0.1]'
@@ -144,7 +144,7 @@ function ThemeToggle({
     >
       {light ? (
         <>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
             <path
               d="M21 14.5A8.5 8.5 0 1 1 9.5 3 7 7 0 0 0 21 14.5Z"
               stroke="currentColor"
@@ -152,11 +152,11 @@ function ThemeToggle({
               strokeLinejoin="round"
             />
           </svg>
-          Dark
+          <span className="hidden lg:inline">Dark</span>
         </>
       ) : (
         <>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
             <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.8" />
             <path
               d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"
@@ -165,7 +165,7 @@ function ThemeToggle({
               strokeLinecap="round"
             />
           </svg>
-          Light
+          <span className="hidden lg:inline">Light</span>
         </>
       )}
     </button>
@@ -335,18 +335,18 @@ export function AdminDashboardPage() {
             : 'border-white/[0.08] bg-[#16161c]/92'
         }`}
       >
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-5 md:h-[4.5rem] md:px-8">
-          <div className="flex min-w-0 items-center gap-3">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-3 px-4 sm:h-16 sm:px-5 md:h-[4.5rem] md:px-8">
+          <div className="flex min-w-0 items-center gap-2.5">
             <Link
               to="/"
-              className={`truncate text-sm font-bold tracking-[0.16em] uppercase ${
+              className={`truncate text-[12px] font-bold tracking-[0.16em] uppercase sm:text-sm ${
                 light ? 'text-[#0a0a0a]' : 'text-white'
               }`}
             >
               Pondy Tripora
             </Link>
             <span
-              className={`hidden rounded-full px-2.5 py-1 text-[10px] font-semibold tracking-[0.12em] uppercase sm:inline ${
+              className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-semibold tracking-[0.14em] uppercase ${
                 light
                   ? 'bg-[#0a0a0a] text-white'
                   : 'bg-[#c8f14a]/15 text-[#c8f14a]'
@@ -355,48 +355,50 @@ export function AdminDashboardPage() {
               Admin
             </span>
           </div>
-          <div className="flex items-center gap-2 sm:gap-3">
-            <span
-              className={`rounded-full px-2.5 py-1 text-[10px] font-semibold tracking-[0.12em] uppercase sm:hidden ${
-                light
-                  ? 'bg-[#0a0a0a] text-white'
-                  : 'bg-[#c8f14a]/15 text-[#c8f14a]'
-              }`}
-            >
-              Admin
-            </span>
+          <div className="flex h-10 shrink-0 items-center gap-1.5 sm:gap-2">
             <ThemeToggle
               theme={theme}
               onToggle={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
             />
             <span
-              className={`hidden text-sm sm:inline ${light ? 'text-[#6b6560]' : 'text-[#7a7a7a]'}`}
+              className={`hidden text-sm lg:inline ${light ? 'text-[#6b6560]' : 'text-[#7a7a7a]'}`}
             >
               {username}
             </span>
             <button
               type="button"
               onClick={logout}
-              className={`rounded-full px-3 py-2 text-[11px] font-bold tracking-[0.1em] uppercase transition sm:px-5 sm:py-2.5 ${
+              aria-label="Log out"
+              className={`inline-flex h-10 items-center justify-center rounded-full px-2.5 text-[11px] font-bold tracking-[0.1em] uppercase transition lg:px-5 ${
                 light
                   ? 'bg-[#0a0a0a] text-white hover:bg-black/85'
                   : 'bg-[#c8f14a] text-black hover:brightness-110'
               }`}
             >
-              Log out
+              <svg className="h-4 w-4 lg:hidden" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <path
+                  d="M10 7V5a2 2 0 012-2h7v18h-7a2 2 0 01-2-2v-2"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                />
+                <path d="M4 12h11M12 8l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span className="hidden lg:inline">Log out</span>
             </button>
             <button
               type="button"
               onClick={() => setMenuOpen(true)}
-              className={`flex h-10 w-10 items-center justify-center lg:hidden ${
+              className={`grid h-10 w-10 place-items-center lg:hidden ${
                 light ? 'text-[#0a0a0a]' : 'text-white'
               }`}
               aria-label="Open admin menu"
               aria-expanded={menuOpen}
             >
-              <span className="flex w-6 flex-col gap-1.5">
-                <span className="block h-[2px] w-full bg-current" />
-                <span className="block h-[2px] w-full bg-current" />
+              <span className="flex w-[18px] flex-col gap-[5px]">
+                <span className="block h-px w-full bg-current" />
+                <span className="block h-px w-full bg-current" />
+                <span className="block h-px w-3/5 bg-current" />
               </span>
             </button>
           </div>
@@ -412,7 +414,7 @@ export function AdminDashboardPage() {
           aria-modal="true"
           aria-label="Admin sections"
         >
-          <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-5">
+          <div className="mx-auto flex h-14 w-full max-w-7xl items-center justify-between px-4 sm:h-16 sm:px-5">
             <p className="font-sans text-sm font-bold tracking-[0.18em] uppercase">Pondy Tripora</p>
             <button
               type="button"

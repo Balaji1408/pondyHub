@@ -46,9 +46,9 @@ export function LanguageSwitcher({
         aria-expanded={open}
         aria-controls={listId}
         aria-label={t('nav.language')}
-        className={`inline-flex cursor-pointer items-center gap-1.5 font-semibold tracking-[0.12em] text-white transition hover:opacity-90 ${
-          size === 'md' ? 'text-[14px]' : 'text-[12px]'
-        } ${compact ? 'px-1 py-1' : 'px-2 py-1.5'}`}
+        className={`inline-flex h-10 cursor-pointer items-center gap-1 font-medium tracking-[0.14em] text-white uppercase transition hover:opacity-90 ${
+          size === 'md' ? 'text-[14px]' : 'text-[11px]'
+        } ${compact ? 'px-2' : 'px-2.5'}`}
       >
         <span className="uppercase">Lang</span>
         <span className="text-[9px] opacity-60" aria-hidden>

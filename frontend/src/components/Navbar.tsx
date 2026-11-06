@@ -13,6 +13,7 @@ const linkDefs = [
   { to: '/temples', key: 'nav.temples' },
   // Guide stays at /guide for admins; hidden from public nav for now.
   { to: '/bars', key: 'nav.bars' },
+  { to: '/others', key: 'nav.others' },
   { to: '/food-street', key: 'nav.foodStreet' },
   { to: '/white-town', key: 'nav.whiteTown' },
 ] as const
@@ -22,7 +23,7 @@ export function Navbar() {
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const { pathname } = useLocation()
-  const { launching, launchTo } = usePageTransition()
+  const { launchTo } = usePageTransition()
   const isHome = pathname === '/'
   const isLatin = locale === 'en'
 
@@ -51,18 +52,14 @@ export function Navbar() {
 
   const solid = !isHome || scrolled || open
 
-  const handleGetStarted = (e: MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault()
-    launchTo('/rooms')
-  }
-
   const handleNavLaunch = (to: string) => (e: MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault()
     setOpen(false)
     launchTo(to)
   }
 
-  const navCase = isLatin ? 'uppercase tracking-[0.16em]' : 'tracking-wide'
+  const navCase = isLatin ? 'uppercase tracking-[0.14em]' : 'tracking-wide'
+  const tabCase = isLatin ? 'uppercase tracking-[0.11em]' : 'tracking-wide'
 
   return (
     <>
@@ -79,24 +76,24 @@ export function Navbar() {
             solid ? 'opacity-0' : 'opacity-100'
           }`}
         />
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-5 md:h-[4.25rem] md:px-8">
+        <div className="mx-auto flex h-14 w-full max-w-[100rem] items-center justify-between gap-3 px-4 sm:h-16 sm:px-6 lg:h-[4.25rem] lg:gap-6 lg:px-8">
           <Link
             to="/"
-            className="shrink-0 font-sans text-sm font-bold tracking-[0.18em] text-white uppercase md:text-[15px]"
+            className="min-w-0 truncate font-sans text-[12px] font-bold tracking-[0.16em] text-white uppercase sm:text-[13px] sm:tracking-[0.2em]"
           >
             {t('brand.name')}
           </Link>
 
-          <nav aria-label={t('nav.primary')} className="hidden min-w-0 flex-1 justify-center lg:flex">
-            <ul className="flex items-center gap-0.5">
-              {links.slice(0, 7).map((l) => (
+          <nav aria-label={t('nav.primary')} className="hidden min-w-0 flex-1 lg:block">
+            <ul className="flex items-center justify-center gap-x-4 xl:gap-x-6">
+              {links.map((l) => (
                 <li key={l.to}>
                   <NavLink
                     to={l.to}
                     onClick={handleNavLaunch(l.to)}
                     className={({ isActive }) =>
-                      `group relative mx-1 px-3 py-2 text-[12.5px] font-semibold transition-colors duration-300 ${navCase} ${
-                        isActive ? 'text-white' : 'text-white hover:opacity-90'
+                      `group relative block py-2 text-[11px] font-medium whitespace-nowrap transition-colors duration-300 xl:text-[12px] ${tabCase} ${
+                        isActive ? 'text-white' : 'text-white/70 hover:text-white'
                       }`
                     }
                   >
@@ -104,10 +101,8 @@ export function Navbar() {
                       <>
                         {l.label}
                         <span
-                          className={`absolute inset-x-3 -bottom-0.5 h-px origin-left bg-white transition-transform duration-300 ease-out ${
-                            isActive
-                              ? 'scale-x-100'
-                              : 'scale-x-0 group-hover:scale-x-100'
+                          className={`absolute -bottom-0.5 left-1/2 h-px w-3.5 -translate-x-1/2 bg-white transition-opacity duration-300 ${
+                            isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-60'
                           }`}
                           aria-hidden
                         />
@@ -119,47 +114,31 @@ export function Navbar() {
             </ul>
           </nav>
 
-          <div className="flex items-center gap-2 md:gap-3">
-            <LanguageSwitcher />
+          <div className="flex h-10 shrink-0 items-center gap-0.5 sm:gap-3">
+            <LanguageSwitcher compact />
             <Link
               to="/owner/login"
-              className={`hidden text-[12px] font-semibold text-white/80 transition hover:text-white sm:inline ${
-                isLatin ? 'tracking-[0.16em] uppercase' : 'tracking-wide'
-              }`}
+              className={`hidden text-[11px] font-medium text-white/75 transition hover:text-white lg:inline ${navCase}`}
             >
               {t('nav.members')}
             </Link>
             <Link
               to="/admin/login"
-              className={`hidden text-[12px] font-semibold text-white transition hover:opacity-90 sm:inline ${
-                isLatin ? 'tracking-[0.16em] uppercase' : 'tracking-wide'
-              }`}
+              className={`hidden text-[11px] font-medium text-white/75 transition hover:text-white lg:inline ${navCase}`}
             >
               {t('nav.admin')}
             </Link>
-            {isHome && (
-              <Link
-                to="/rooms"
-                onClick={handleGetStarted}
-                className={`cta-get-started px-3 py-2.5 text-[10px] font-semibold whitespace-nowrap [text-shadow:none] sm:px-5 sm:text-[11px] ${
-                  isLatin ? 'tracking-[0.14em] uppercase' : 'tracking-wide'
-                } ${launching ? 'is-launching' : ''}`}
-                aria-busy={launching}
-              >
-                {t('nav.getStarted')}
-              </Link>
-            )}
-
             <button
               type="button"
               onClick={() => setOpen(true)}
-              className="flex h-10 w-10 items-center justify-center text-white lg:hidden"
+              className="grid h-10 w-10 place-items-center text-white lg:hidden"
               aria-label={t('nav.openMenu')}
               aria-expanded={open}
             >
-              <span className="flex w-6 flex-col gap-1.5">
-                <span className="block h-[2px] w-full bg-current" />
-                <span className="block h-[2px] w-full bg-current" />
+              <span className="flex w-[18px] flex-col gap-[5px]">
+                <span className="block h-px w-full bg-current" />
+                <span className="block h-px w-full bg-current" />
+                <span className="block h-px w-3/5 bg-current" />
               </span>
             </button>
           </div>
@@ -173,20 +152,20 @@ export function Navbar() {
           aria-modal="true"
           aria-label={t('nav.siteMenu')}
         >
-          <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-5 md:px-8">
+          <div className="mx-auto flex h-14 w-full max-w-7xl items-center justify-between px-4 sm:h-16 sm:px-6">
             <Link
               to="/"
-              className="font-sans text-sm font-bold tracking-[0.18em] uppercase"
+              className="min-w-0 truncate font-sans text-[12px] font-bold tracking-[0.16em] uppercase sm:text-[13px] sm:tracking-[0.2em]"
               onClick={() => setOpen(false)}
             >
               {t('brand.name')}
             </Link>
-            <div className="flex items-center gap-2">
-              <LanguageSwitcher />
+            <div className="flex h-10 shrink-0 items-center">
+              <LanguageSwitcher compact />
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="flex h-10 w-10 items-center justify-center"
+                className="grid h-10 w-10 place-items-center"
                 aria-label={t('nav.closeMenu')}
               >
                 <span className="relative block h-5 w-5">
@@ -197,15 +176,15 @@ export function Navbar() {
             </div>
           </div>
 
-          <nav className="mx-auto flex w-full max-w-7xl flex-1 flex-col justify-center px-5 pb-16 md:px-8">
-            <ul className="space-y-1">
+          <nav className="mx-auto flex w-full max-w-7xl flex-1 flex-col justify-center overflow-y-auto px-5 pb-16 md:px-8">
+            <ul className="grid grid-cols-1 gap-x-12 sm:grid-cols-2">
               {links.map((l, i) => (
-                <li key={l.to} className="animate-fade-up" style={{ animationDelay: `${0.05 * i}s` }}>
+                <li key={l.to} className="animate-fade-up border-b border-white/10" style={{ animationDelay: `${0.04 * i}s` }}>
                   <NavLink
                     to={l.to}
                     onClick={handleNavLaunch(l.to)}
                     className={({ isActive }) =>
-                      `block font-sans text-4xl font-bold tracking-tight transition hover:opacity-70 sm:text-5xl md:text-6xl ${
+                      `block py-3 font-sans text-3xl font-bold tracking-tight transition hover:opacity-70 sm:py-4 sm:text-4xl ${
                         isActive ? 'text-white' : 'text-white/75'
                       }`
                     }

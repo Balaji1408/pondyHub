@@ -11,6 +11,7 @@ export type PlaceKind =
   | 'whitetown'
   | 'temple'
   | 'church'
+  | 'gym'
 export type BookingType = 'room' | 'vehicle' | 'boat'
 export type GallerySlot = 'exterior' | 'bedroom' | 'bathroom' | 'living'
 

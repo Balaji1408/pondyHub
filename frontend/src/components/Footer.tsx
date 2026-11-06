@@ -25,6 +25,7 @@ const COLUMNS: { heading: string; links: InternalLink[] }[] = [
       { to: '/temples', key: 'nav.temples' },
       { to: '/white-town', key: 'nav.whiteTown' },
       { to: '/bars', key: 'nav.bars' },
+      { to: '/others', key: 'nav.others' },
       { to: '/food-street', key: 'nav.foodStreet' },
     ],
   },

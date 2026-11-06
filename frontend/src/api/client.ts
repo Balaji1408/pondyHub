@@ -25,12 +25,31 @@ import type {
   StartingPrices,
   Vehicle,
 } from '../types'
-import { getAdminToken, getCustomerToken } from '../auth/session'
+import { clearAdminSession, clearCustomerSession, getAdminToken, getCustomerToken } from '../auth/session'
+
+function redirectExpiredSession(url: string) {
+  const isLogin = url.includes('/login')
+  if (isLogin) return
+  if (url.startsWith('/api/admin')) {
+    clearAdminSession()
+    if (!window.location.pathname.startsWith('/admin/login')) {
+      window.location.assign('/admin/login')
+    }
+    return
+  }
+  if (url.startsWith('/api/customers')) {
+    clearCustomerSession()
+    if (!window.location.pathname.startsWith('/owner/login')) {
+      window.location.assign('/owner/login')
+    }
+  }
+}
 
 async function getJson<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, init)
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
+    if (res.status === 401) redirectExpiredSession(url)
     throw new Error((body as { error?: string }).error || `Request failed (${res.status})`)
   }
   return res.json() as Promise<T>

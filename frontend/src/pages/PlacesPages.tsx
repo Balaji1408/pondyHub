@@ -179,7 +179,29 @@ export function BarsPage() {
     <ListingPageShell eyebrow={t('common.explore')} title={t('bars.title')} description={t('bars.desc')}>
       {isLoading && <p className="px-6 py-16 text-muted md:px-16">{t('common.loading')}</p>}
       {isError && <p className="px-6 py-16 text-red-600 md:px-16">{(error as Error).message}</p>}
-      <PlaceListings places={data} showHours showOpenBadge />
+      <PlaceListings places={data} showHours showOpenBadge kindLabel={t('bars.pub')} />
+    </ListingPageShell>
+  )
+}
+
+export function OthersPage() {
+  const { t } = useLanguage()
+  const places = usePlaces({ kind: 'gym' })
+  const data = useMemo(() => {
+    if (!places.data) return places.data
+    return [...places.data].sort((a, b) => {
+      if (a.name === 'Aadukalam Gym') return -1
+      if (b.name === 'Aadukalam Gym') return 1
+      return 0
+    })
+  }, [places.data])
+  const { isLoading, isError, error } = places
+
+  return (
+    <ListingPageShell eyebrow={t('common.explore')} title={t('others.title')} description={t('others.desc')}>
+      {isLoading && <p className="px-6 py-16 text-muted md:px-16">{t('common.loading')}</p>}
+      {isError && <p className="px-6 py-16 text-red-600 md:px-16">{(error as Error).message}</p>}
+      <PlaceListings places={data} showHours showOpenBadge kindLabel={t('others.gym')} />
     </ListingPageShell>
   )
 }
@@ -222,10 +244,12 @@ function PlaceListings({
   places,
   showHours,
   showOpenBadge,
+  kindLabel,
 }: {
   places?: Place[]
   showHours?: boolean
   showOpenBadge?: boolean
+  kindLabel?: string
 }) {
   const { t } = useLanguage()
 
@@ -242,9 +266,9 @@ function PlaceListings({
             eyebrow={
               showOpenBadge && p.opensAt
                 ? p.openNow
-                  ? `${p.kind} · ${t('common.openNow')}`
-                  : `${p.kind} · ${t('common.closed')}`
-                : p.kind
+                  ? `${kindLabel || p.kind} · ${t('common.openNow')}`
+                  : `${kindLabel || p.kind} · ${t('common.closed')}`
+                : kindLabel || p.kind
             }
             title={p.name}
             location={p.location}

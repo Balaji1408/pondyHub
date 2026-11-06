@@ -15,6 +15,7 @@ import {
   TemplesPage,
   BeachesPage,
   BarsPage,
+  OthersPage,
   FoodStreetPage,
   WhiteTownPage,
 } from './pages/PlacesPages'
@@ -110,6 +111,7 @@ export default function App() {
                   <Route path="beaches" element={<BeachesPage />} />
                   <Route path="guide" element={<GuidePage />} />
                   <Route path="bars" element={<BarsPage />} />
+                  <Route path="others" element={<OthersPage />} />
                   <Route path="food-street" element={<FoodStreetPage />} />
                   <Route path="white-town" element={<WhiteTownPage />} />
                 </Route>

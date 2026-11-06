@@ -208,3 +208,26 @@ INSERT INTO places (name, kind, description, location, opens_at, closes_at, best
 ('Our Lady of Angels Church', 'church', 'Also called Église de Notre Dame des Anges — soft yellow walls facing the sea breeze.', 'Near Beach Road / White Town',
  '07:00:00', '19:00:00', 'Evening for the lit façade', 0, 2, NULL,
  JSON_ARRAY('https://commons.wikimedia.org/wiki/Special:FilePath/Eglise_de_Notre_Dame_des_Anges_-_PONDICHERRY.JPG?width=1200','https://commons.wikimedia.org/wiki/Special:FilePath/Our_Lady_of_Angels_Church,_a_Greco_Roman_structure_at_White_town_in_Pondicherry_04.jpg?width=1200'), 4.7);
+
+INSERT INTO places (name, kind, description, location, opens_at, closes_at, best_visit_time, is_seafood_spot, near_room_id, near_beach_id, images, rating) VALUES
+('Gold''s Gym Pondicherry', 'gym', 'Full-floor weights, cardio, and group classes on the 100 Feet Road side of town.', '100 Feet Road, Ellaipillaichavady',
+ '05:00:00', '22:00:00', 'Early morning or after 6 PM', 0, NULL, NULL,
+ JSON_ARRAY('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1200&q=80','https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=1200&q=80'), 4.6),
+('SLAM Lifestyle and Fitness Studio', 'gym', 'Personal training, functional work, and a quieter floor for focused sessions.', 'Pondicherry',
+ '05:30:00', '21:30:00', 'Morning slots fill first', 0, NULL, NULL,
+ JSON_ARRAY('https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=1200&q=80','https://images.unsplash.com/photo-1540497077202-7c8a3999166f?w=1200&q=80'), 4.7),
+('Oxygen Fitness Centre', 'gym', 'Unisex gym above Villianur Main Road — free weights, machines, and trainer-led plans.', 'Villianur Main Road',
+ '05:30:00', '21:30:00', 'Before 8 AM', 0, NULL, NULL,
+ JSON_ARRAY('https://images.unsplash.com/photo-1593079831268-3381b0db4a77?w=1200&q=80','https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=1200&q=80'), 4.6),
+('Core Fitness Studio', 'gym', 'Busy studio on Villianur Main Road with strength floors and coached sessions.', 'Villianur Main Road',
+ '05:00:00', '21:00:00', 'Weekday mornings', 0, NULL, NULL,
+ JSON_ARRAY('https://images.unsplash.com/photo-1576678927484-cc907957088c?w=1200&q=80','https://images.unsplash.com/photo-1550345332-09e3ac987658?w=1200&q=80'), 4.7),
+('Aroma Health & Fitness Centre', 'gym', 'Compact unisex gym on Mission Street, opposite Bata — easy stop in the old town.', 'Mission Street',
+ '05:30:00', '21:00:00', 'Lunch hour or early evening', 0, NULL, NULL,
+ JSON_ARRAY('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1200&q=80','https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=1200&q=80'), 4.8),
+('Aadukalam Gym', 'gym', 'Ladies fitness gym on Lawspet Main Road — air-conditioned floor, trainers, and parking.', '150, Lawspet Main Road, Pakkamudayanpet',
+ '05:30:00', '21:30:00', 'Morning batches before 9 AM', 0, NULL, NULL,
+ JSON_ARRAY('https://images.unsplash.com/photo-1593079831268-3381b0db4a77?w=1200&q=80','https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1200&q=80'), 4.8),
+('Invictus Fitness', 'gym', 'Late-evening gym on the highway edge of town, popular for strength training.', 'NH 332',
+ '05:00:00', '23:00:00', 'Open late on weeknights', 0, NULL, NULL,
+ JSON_ARRAY('https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=1200&q=80','https://images.unsplash.com/photo-1540497077202-7c8a3999166f?w=1200&q=80'), 4.9);

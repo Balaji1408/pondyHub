@@ -312,7 +312,7 @@ async function ensurePlacesTempleSchema() {
   await pool.query(`
     ALTER TABLE places
     MODIFY COLUMN kind ENUM(
-      'cafe','restaurant','roadside','beach','bar','foodstreet','whitetown','temple','church'
+      'cafe','restaurant','roadside','beach','bar','foodstreet','whitetown','temple','church','gym'
     ) NOT NULL`);
 
   // Older seed used a placeholder name without a good public photo — rename in place.
@@ -515,6 +515,115 @@ async function ensurePlacesTempleSchema() {
   }
 }
 
+async function ensureGymPlaces() {
+  if (!(await tableExists('places'))) return;
+
+  await pool.query(`
+    ALTER TABLE places
+    MODIFY COLUMN kind ENUM(
+      'cafe','restaurant','roadside','beach','bar','foodstreet','whitetown','temple','church','gym'
+    ) NOT NULL`);
+
+  const [existing] = await pool.query(`SELECT name FROM places WHERE kind = 'gym'`);
+  const have = new Set((existing as { name: string }[]).map((r) => r.name));
+
+  const img = (id: string) => `https://images.unsplash.com/${id}?w=1200&q=80`;
+  const seeds = [
+    {
+      name: "Gold's Gym Pondicherry",
+      description: 'Full-floor weights, cardio, and group classes on the 100 Feet Road side of town.',
+      location: '100 Feet Road, Ellaipillaichavady',
+      opensAt: '05:00:00',
+      closesAt: '22:00:00',
+      bestVisitTime: 'Early morning or after 6 PM',
+      images: [img('photo-1534438327276-14e5300c3a48'), img('photo-1517836357463-d25dfeac3438')],
+      rating: 4.6,
+    },
+    {
+      name: 'SLAM Lifestyle and Fitness Studio',
+      description: 'Personal training, functional work, and a quieter floor for focused sessions.',
+      location: 'Pondicherry',
+      opensAt: '05:30:00',
+      closesAt: '21:30:00',
+      bestVisitTime: 'Morning slots fill first',
+      images: [img('photo-1571902943202-507ec2618e8f'), img('photo-1540497077202-7c8a3999166f')],
+      rating: 4.7,
+    },
+    {
+      name: 'Oxygen Fitness Centre',
+      description: 'Unisex gym above Villianur Main Road — free weights, machines, and trainer-led plans.',
+      location: 'Villianur Main Road',
+      opensAt: '05:30:00',
+      closesAt: '21:30:00',
+      bestVisitTime: 'Before 8 AM',
+      images: [img('photo-1593079831268-3381b0db4a77'), img('photo-1583454110551-21f2fa2afe61')],
+      rating: 4.6,
+    },
+    {
+      name: 'Core Fitness Studio',
+      description: 'Busy studio on Villianur Main Road with strength floors and coached sessions.',
+      location: 'Villianur Main Road',
+      opensAt: '05:00:00',
+      closesAt: '21:00:00',
+      bestVisitTime: 'Weekday mornings',
+      images: [img('photo-1576678927484-cc907957088c'), img('photo-1550345332-09e3ac987658')],
+      rating: 4.7,
+    },
+    {
+      name: 'Aroma Health & Fitness Centre',
+      description: 'Compact unisex gym on Mission Street, opposite Bata — easy stop in the old town.',
+      location: 'Mission Street',
+      opensAt: '05:30:00',
+      closesAt: '21:00:00',
+      bestVisitTime: 'Lunch hour or early evening',
+      images: [img('photo-1534438327276-14e5300c3a48'), img('photo-1571902943202-507ec2618e8f')],
+      rating: 4.8,
+    },
+    {
+      name: 'Aadukalam Gym',
+      description:
+        'Ladies fitness gym on Lawspet Main Road — air-conditioned floor, trainers, and parking.',
+      location: '150, Lawspet Main Road, Pakkamudayanpet',
+      opensAt: '05:30:00',
+      closesAt: '21:30:00',
+      bestVisitTime: 'Morning batches before 9 AM',
+      images: [img('photo-1593079831268-3381b0db4a77'), img('photo-1534438327276-14e5300c3a48')],
+      rating: 4.8,
+    },
+    {
+      name: 'Invictus Fitness',
+      description: 'Late-evening gym on the highway edge of town, popular for strength training.',
+      location: 'NH 332',
+      opensAt: '05:00:00',
+      closesAt: '23:00:00',
+      bestVisitTime: 'Open late on weeknights',
+      images: [img('photo-1517836357463-d25dfeac3438'), img('photo-1540497077202-7c8a3999166f')],
+      rating: 4.9,
+    },
+  ];
+
+  for (const s of seeds) {
+    if (have.has(s.name)) {
+      if (s.name === 'Aadukalam Gym') {
+        await pool.query(`UPDATE places SET images = :images WHERE name = :name`, {
+          name: s.name,
+          images: JSON.stringify(s.images),
+        });
+      }
+      continue;
+    }
+    await pool.query(
+      `INSERT INTO places
+        (name, kind, description, location, opens_at, closes_at, best_visit_time,
+         is_seafood_spot, near_room_id, near_beach_id, images, rating)
+       VALUES
+        (:name, 'gym', :description, :location, :opensAt, :closesAt, :bestVisitTime,
+         0, NULL, NULL, :images, :rating)`,
+      { ...s, images: JSON.stringify(s.images) }
+    );
+  }
+}
+
 /** Adds columns and tables to existing databases that were imported before they existed. */
 export async function ensureSchema() {
   await ensureRoomColumns();
@@ -523,6 +632,7 @@ export async function ensureSchema() {
   await ensureUsersSchema();
   await ensureGuideSchema();
   await ensurePlacesTempleSchema();
+  await ensureGymPlaces();
 }
 
 export async function pingDb() {

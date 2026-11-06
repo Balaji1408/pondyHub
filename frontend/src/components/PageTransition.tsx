@@ -32,6 +32,8 @@ const PATH_LABEL_KEYS: Record<string, string> = {
   '/cafes': 'nav.cafes',
   '/beaches': 'nav.beaches',
   '/bars': 'nav.bars',
+  '/others': 'nav.others',
+  '/temples': 'nav.temples',
   '/food-street': 'nav.foodStreet',
   '/white-town': 'nav.whiteTown',
 }
