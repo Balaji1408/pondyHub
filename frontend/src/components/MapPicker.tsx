@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { googleMapsSearchUrl } from '../lib/maps'
-
 export type MapPick = {
   proposedName: string
   proposedAddress: string
@@ -113,11 +111,20 @@ function ManualMapFallback({
   const mapElRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<L.Map | null>(null)
   const markerRef = useRef<L.Marker | null>(null)
+  const layersRef = useRef<{
+    street: L.TileLayer
+    satellite: L.TileLayer
+    roads: L.TileLayer
+    places: L.TileLayer
+  } | null>(null)
+  const [basemap, setBasemap] = useState<'street' | 'satellite'>('street')
   const [manualName, setManualName] = useState(value?.proposedName || '')
   const [manualAddress, setManualAddress] = useState(value?.proposedAddress || '')
   const [error, setError] = useState<string | null>(null)
   const [searching, setSearching] = useState(false)
+  const [lookingUp, setLookingUp] = useState(false)
   const [pinSet, setPinSet] = useState(() => !!(value && hasValidCoords(value.lat, value.lng)))
+  const lookupSeq = useRef(0)
 
   const draftRef = useRef({ name: manualName, address: manualAddress, value })
   draftRef.current = { name: manualName, address: manualAddress, value }
@@ -134,14 +141,29 @@ function ManualMapFallback({
 
     L.control.zoom({ position: 'topright' }).addTo(map)
 
-    // Colorful street basemap — Esri World Street Map (no API key).
-    L.tileLayer(
+    const street = L.tileLayer(
       'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
       {
         attribution: 'Tiles &copy; Esri',
         maxZoom: 19,
       }
     ).addTo(map)
+    const satellite = L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      {
+        attribution: 'Imagery &copy; Esri',
+        maxZoom: 19,
+      }
+    )
+    const roads = L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',
+      { maxZoom: 19, attribution: '' }
+    )
+    const places = L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+      { maxZoom: 19, attribution: '' }
+    )
+    layersRef.current = { street, satellite, roads, places }
 
     const marker = L.marker([start.lat, start.lng], {
       draggable: true,
@@ -152,23 +174,53 @@ function ManualMapFallback({
     markerRef.current = marker
 
     function commitPick(lat: number, lng: number) {
+      const seq = ++lookupSeq.current
       const { name, address, value: current } = draftRef.current
       const proposedName = name.trim() || current?.proposedName || 'Selected location'
-      const proposedAddress =
+      const fallbackAddress =
         address.trim() || current?.proposedAddress || `${lat.toFixed(5)}, ${lng.toFixed(5)}`
       setError(null)
       setPinSet(true)
+      setLookingUp(true)
       marker.setOpacity(1)
       // Replay drop animation on each place.
       marker.setIcon(createPinIcon())
       onChange({
         proposedName,
-        proposedAddress,
+        proposedAddress: fallbackAddress,
         lat,
         lng,
         placeId: null,
         mapUrl: coordsMapUrl(lat, lng),
       })
+
+      void fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&lat=${lat}&lon=${lng}`,
+        { headers: { Accept: 'application/json' } }
+      )
+        .then(async (res) => {
+          if (!res.ok) return null
+          const data = (await res.json()) as { display_name?: string }
+          return data.display_name?.trim() || null
+        })
+        .then((found) => {
+          if (lookupSeq.current !== seq) return
+          setLookingUp(false)
+          if (!found) return
+          setManualAddress(found)
+          draftRef.current.address = found
+          onChange({
+            proposedName,
+            proposedAddress: found,
+            lat,
+            lng,
+            placeId: null,
+            mapUrl: coordsMapUrl(lat, lng),
+          })
+        })
+        .catch(() => {
+          if (lookupSeq.current === seq) setLookingUp(false)
+        })
     }
 
     map.on('click', (e: L.LeafletMouseEvent) => {
@@ -192,6 +244,7 @@ function ManualMapFallback({
       map.remove()
       mapRef.current = null
       markerRef.current = null
+      layersRef.current = null
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -221,7 +274,7 @@ function ManualMapFallback({
       }
       const lat = Number(hit.lat)
       const lng = Number(hit.lon)
-      mapRef.current?.flyTo([lat, lng], 16, { duration: 0.85 })
+      mapRef.current?.flyTo([lat, lng], 18, { duration: 0.85 })
       markerRef.current?.setLatLng([lat, lng])
       markerRef.current?.setOpacity(1)
       markerRef.current?.setIcon(createPinIcon())
@@ -241,12 +294,28 @@ function ManualMapFallback({
     }
   }
 
-  const mapsHref =
-    value && hasValidCoords(value.lat, value.lng)
-      ? value.mapUrl
-      : manualAddress.trim()
-        ? googleMapsSearchUrl(manualAddress)
-        : null
+  function showBasemap(next: 'street' | 'satellite') {
+    const map = mapRef.current
+    const layers = layersRef.current
+    if (!map || !layers) return
+    const { street, satellite, roads, places } = layers
+    const photo = next === 'satellite'
+    if (photo) {
+      if (map.hasLayer(street)) map.removeLayer(street)
+      if (!map.hasLayer(satellite)) satellite.addTo(map)
+      if (!map.hasLayer(roads)) roads.addTo(map)
+      if (!map.hasLayer(places)) places.addTo(map)
+      if (map.getZoom() < 17) map.setZoom(17)
+    } else {
+      if (map.hasLayer(places)) map.removeLayer(places)
+      if (map.hasLayer(roads)) map.removeLayer(roads)
+      if (map.hasLayer(satellite)) map.removeLayer(satellite)
+      if (!map.hasLayer(street)) street.addTo(map)
+    }
+    setBasemap(next)
+  }
+
+  const mapsHref = value && hasValidCoords(value.lat, value.lng) ? value.mapUrl : null
 
   const fieldClass =
     'w-full rounded-2xl border border-[#cdd9e0] bg-white/90 px-3.5 py-3 text-sm text-[#0c1419] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] outline-none transition placeholder:text-[#8a9aa4] focus:border-[#1f4d52]/45 focus:ring-4 focus:ring-[#1f4d52]/10'
@@ -258,8 +327,8 @@ function ManualMapFallback({
           <p className="text-[11px] font-semibold tracking-[0.16em] text-[#5a6a74] uppercase">
             Stay location
           </p>
-          <p className="mt-1 text-sm text-[#5a6a74]">
-            Add the name and address, then place the pin on the map.
+          <p className="mt-1 text-sm leading-relaxed text-[#5a6a74]">
+            Type the stay name and address, then tap Find address. Switch to Satellite to see the building with street names, then tap or drag the pin. The address fills in from that spot.
           </p>
         </div>
 
@@ -320,12 +389,19 @@ function ManualMapFallback({
               href={mapsHref}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center rounded-full border border-[#b9c8d1] bg-white/80 px-4 py-2.5 text-[11px] font-semibold tracking-[0.14em] text-[#0c1419] uppercase transition hover:border-[#0c1419]/35 hover:bg-white"
+              className="inline-flex items-center rounded-full border border-[#b9c8d1] bg-white/80 px-4 py-2.5 text-[11px] font-semibold tracking-[0.14em] text-[#5a6a74] uppercase transition hover:border-[#0c1419]/35 hover:bg-white hover:text-[#0c1419]"
             >
-              Open in Maps
+              Preview pin
             </a>
           )}
         </div>
+        <p className="text-xs leading-relaxed text-[#6a7c86]">
+          {lookingUp
+            ? 'Reading the address from the pin…'
+            : pinSet
+              ? 'Pin saved on this page. Drag it if the spot is slightly off — the address updates with it. Preview pin only opens Google Maps and does not change this form.'
+              : 'Stay on this page. Find address places the pin here. Do not leave this form to set the address.'}
+        </p>
       </div>
 
       <div className="relative mt-4">
@@ -334,8 +410,29 @@ function ManualMapFallback({
           className="h-[280px] w-full overflow-hidden border-y border-[#d5e0e6] bg-[#dce6eb] sm:h-[320px]"
         />
 
+        <div className="absolute top-3 left-3 z-[500] flex overflow-hidden rounded-full border border-white/80 bg-white/95 shadow-[0_10px_24px_-16px_rgba(12,20,25,0.7)]">
+          {(
+            [
+              ['street', 'Street'],
+              ['satellite', 'Satellite'],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => showBasemap(id)}
+              aria-pressed={basemap === id}
+              className={`px-2.5 py-1.5 text-[10px] font-semibold tracking-[0.12em] uppercase transition sm:px-3 ${
+                basemap === id ? 'bg-[#0c1419] text-white' : 'text-[#3d4c55] hover:bg-[#f3f7f8]'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
         {!pinSet && (
-          <div className="pointer-events-none absolute inset-x-0 top-4 flex justify-center px-4">
+          <div className="pointer-events-none absolute inset-x-0 top-14 flex justify-center px-4">
             <span className="rounded-full border border-white/70 bg-[#0c1419]/78 px-3.5 py-1.5 text-[11px] font-medium tracking-wide text-white shadow-[0_10px_24px_-12px_rgba(12,20,25,0.55)] backdrop-blur-md">
               Tap the map to drop your pin
             </span>
@@ -369,7 +466,7 @@ function ManualMapFallback({
       </div>
 
       <p className="px-4 py-3 text-xs text-[#6a7c86] sm:px-5">
-        Drag the pin to fine-tune. Scroll is locked so the page stays easy to move past.
+        Tap or drag the pin to set the stay. The address field fills from that spot.
       </p>
     </div>
   )
