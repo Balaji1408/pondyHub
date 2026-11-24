@@ -323,15 +323,6 @@ function ManualMapFallback({
   return (
     <div className="map-picker-shell overflow-hidden rounded-[24px] border border-[#c5d3db] bg-gradient-to-b from-[#f7fafb] to-[#eef4f7] shadow-[0_18px_40px_-28px_rgba(12,20,25,0.45)]">
       <div className="space-y-3 px-4 pt-4 sm:px-5 sm:pt-5">
-        <div>
-          <p className="text-[11px] font-semibold tracking-[0.16em] text-[#5a6a74] uppercase">
-            Stay location
-          </p>
-          <p className="mt-1 text-sm leading-relaxed text-[#5a6a74]">
-            Type the stay name and address, then tap Find address. Switch to Satellite to see the building with street names, then tap or drag the pin. The address fills in from that spot.
-          </p>
-        </div>
-
         <div className="grid gap-2.5">
           <label className="block">
             <span className="sr-only">Stay name</span>
@@ -375,7 +366,7 @@ function ManualMapFallback({
           <p className="rounded-xl bg-[#fdeeee] px-3 py-2 text-sm text-[#9b2c2c]">{error}</p>
         )}
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={findAddressOnMap}
@@ -394,14 +385,10 @@ function ManualMapFallback({
               Preview pin
             </a>
           )}
+          {lookingUp && (
+            <span className="text-xs text-[#6a7c86]">Updating address…</span>
+          )}
         </div>
-        <p className="text-xs leading-relaxed text-[#6a7c86]">
-          {lookingUp
-            ? 'Reading the address from the pin…'
-            : pinSet
-              ? 'Pin saved on this page. Drag it if the spot is slightly off — the address updates with it. Preview pin only opens Google Maps and does not change this form.'
-              : 'Stay on this page. Find address places the pin here. Do not leave this form to set the address.'}
-        </p>
       </div>
 
       <div className="relative mt-4">
@@ -465,9 +452,6 @@ function ManualMapFallback({
         )}
       </div>
 
-      <p className="px-4 py-3 text-xs text-[#6a7c86] sm:px-5">
-        Tap or drag the pin to set the stay. The address field fills from that spot.
-      </p>
     </div>
   )
 }

@@ -24,6 +24,7 @@ import { AdminLoginPage } from './pages/AdminLoginPage'
 import { AdminDashboardPage } from './pages/AdminDashboardPage'
 import { OwnerLoginPage } from './pages/OwnerLoginPage'
 import { OwnerRegisterPage } from './pages/OwnerRegisterPage'
+import { OwnerStartPage } from './pages/OwnerStartPage'
 import { OwnerChangePasswordPage } from './pages/OwnerChangePasswordPage'
 import { OwnerPortalPage } from './pages/OwnerPortalPage'
 
@@ -96,6 +97,7 @@ export default function App() {
               <Routes>
                 <Route path="admin/login" element={<AdminLoginPage />} />
                 <Route path="admin" element={<AdminDashboardPage />} />
+                <Route path="owner/start" element={<OwnerStartPage />} />
                 <Route path="owner/login" element={<OwnerLoginPage />} />
                 <Route path="owner/register" element={<OwnerRegisterPage />} />
                 <Route path="owner/change-password" element={<OwnerChangePasswordPage />} />

@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import { useLanguage } from '../i18n/LanguageContext'
+import { LanguageSwitcher } from './LanguageSwitcher'
 
 const fieldClass =
   'mt-1.5 w-full rounded-xl border border-[#c8d6de] bg-white/85 px-3.5 py-2.5 text-sm text-[#0c1419] shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] outline-none transition placeholder:text-[#8a9aa4] focus:border-[#1f4d52]/50 focus:ring-4 focus:ring-[#1f4d52]/12'
@@ -26,6 +28,8 @@ export function OwnerAuthShell({
   wide?: boolean
   compact?: boolean
 }) {
+  const { t } = useLanguage()
+
   return (
     <div
       className={`relative flex h-dvh flex-col overflow-x-hidden text-[#0c1419] ${
@@ -50,7 +54,7 @@ export function OwnerAuthShell({
       />
 
       <header
-        className={`relative z-10 mx-auto flex w-full max-w-6xl shrink-0 items-center justify-between px-5 md:px-8 ${
+        className={`relative z-50 mx-auto flex w-full max-w-6xl shrink-0 items-center justify-between px-5 md:px-8 ${
           compact ? 'py-4' : 'py-5'
         }`}
       >
@@ -62,12 +66,15 @@ export function OwnerAuthShell({
         >
           Pondy Tripora
         </Link>
-        <Link
-          to="/"
-          className="text-[10px] font-semibold tracking-[0.16em] text-[#5a6a74] uppercase transition hover:text-[#0c1419]"
-        >
-          Back to site
-        </Link>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <LanguageSwitcher compact tone="light" />
+          <Link
+            to="/"
+            className="text-[10px] font-semibold tracking-[0.16em] text-[#5a6a74] uppercase transition hover:text-[#0c1419]"
+          >
+            {t('owner.backToSite')}
+          </Link>
+        </div>
       </header>
 
       <main

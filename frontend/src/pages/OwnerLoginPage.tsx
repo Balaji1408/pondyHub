@@ -7,8 +7,10 @@ import {
   ownerAuthFieldClass,
   ownerAuthLabelClass,
 } from '../components/OwnerAuthShell'
+import { useLanguage } from '../i18n/LanguageContext'
 
 export function OwnerLoginPage() {
+  const { t } = useLanguage()
   const navigate = useNavigate()
   const login = useCustomerLogin()
   const [mobile, setMobile] = useState('')
@@ -44,21 +46,38 @@ export function OwnerLoginPage() {
   return (
     <OwnerAuthShell
       compact
-      brandLine="Room owner"
-      title="Sign in"
-      subtitle="Manage your stay listing after admin approval."
+      brandLine={t('owner.roomOwner')}
+      title={t('owner.signIn')}
+      subtitle={t('owner.manageSubtitle')}
       footer={
         <p>
-          New owner?{' '}
+          {t('owner.notApprovedYet')}{' '}
           <Link
-            to="/owner/register"
+            to="/owner/start"
             className="font-semibold text-[#0c1419] underline decoration-[#1f4d52]/35 underline-offset-4 transition hover:text-[#1f4d52]"
           >
-            Register
+            {t('owner.membersHome')}
           </Link>
         </p>
       }
     >
+      <Link
+        to="/owner/register"
+        className="mb-4 flex items-start gap-2.5 rounded-xl border border-[#0c1419]/15 bg-[#0c1419] px-3.5 py-3 text-white transition hover:bg-[#1a2830]"
+      >
+        <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/15" aria-hidden>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+          </svg>
+        </span>
+        <span>
+          <span className="block text-[11px] font-semibold tracking-[0.14em] uppercase">
+            {t('owner.newMemberRegister')}
+          </span>
+          <span className="mt-0.5 block text-[12px] text-white/75">{t('owner.newMemberHint')}</span>
+        </span>
+      </Link>
+
       <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-[#1f4d52]/12 bg-[#1f4d52]/06 px-3 py-2.5">
         <span
           className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#1f4d52]/15 text-[#1f4d52]"
@@ -69,26 +88,36 @@ export function OwnerLoginPage() {
           </svg>
         </span>
         <p className="text-[13px] leading-snug text-[#3d555c]">
-          First login uses <span className="font-semibold text-[#0c1419]">Pondy@123</span> — then
-          change it.
+          {t('owner.firstLoginHint', { password: 'Pondy@123' })
+            .split('Pondy@123')
+            .map((part, i, arr) =>
+              i < arr.length - 1 ? (
+                <span key={i}>
+                  {part}
+                  <span className="font-semibold text-[#0c1419]">Pondy@123</span>
+                </span>
+              ) : (
+                <span key={i}>{part}</span>
+              )
+            )}
         </p>
       </div>
 
       <form onSubmit={onSubmit} className="space-y-3.5">
         <label className="block">
-          <span className={ownerAuthLabelClass}>Mobile</span>
+          <span className={ownerAuthLabelClass}>{t('owner.mobile')}</span>
           <input
             value={mobile}
             onChange={(e) => setMobile(e.target.value)}
             inputMode="numeric"
             autoComplete="tel"
             required
-            placeholder="10-digit mobile number"
+            placeholder={t('owner.mobileLoginPlaceholder')}
             className={ownerAuthFieldClass}
           />
         </label>
         <label className="block">
-          <span className={ownerAuthLabelClass}>Password</span>
+          <span className={ownerAuthLabelClass}>{t('owner.password')}</span>
           <input
             type="password"
             value={password}
@@ -107,7 +136,7 @@ export function OwnerLoginPage() {
           disabled={login.isPending}
           className="w-full rounded-full bg-[#0c1419] py-3 text-[11px] font-bold tracking-[0.16em] text-white uppercase transition hover:bg-[#1a2830] disabled:opacity-50"
         >
-          {login.isPending ? 'Signing in…' : 'Sign in'}
+          {login.isPending ? t('owner.signingIn') : t('owner.signIn')}
         </button>
       </form>
     </OwnerAuthShell>

@@ -117,7 +117,7 @@ export function Navbar() {
           <div className="flex h-10 shrink-0 items-center gap-0.5 sm:gap-3">
             <LanguageSwitcher compact />
             <Link
-              to="/owner/login"
+              to="/owner/start"
               className={`hidden text-[11px] font-medium text-white/75 transition hover:text-white lg:inline ${navCase}`}
             >
               {t('nav.members')}
@@ -198,7 +198,7 @@ export function Navbar() {
                 style={{ animationDelay: `${0.05 * links.length}s` }}
               >
                 <Link
-                  to="/owner/login"
+                  to="/owner/start"
                   onClick={() => setOpen(false)}
                   className="block font-sans text-2xl font-bold tracking-tight text-white/55 transition hover:text-white sm:text-3xl"
                 >
